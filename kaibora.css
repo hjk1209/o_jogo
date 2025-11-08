@@ -1,0 +1,578 @@
+/* --- FONTES E CORES GLOBAIS --- */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+body {
+    background-color: #000;
+    color: #00ff41; /* Verde-terminal */
+    font-family: 'Roboto Mono', monospace; /* Corrigido para o nome da fonte correto */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* O "Corpo" do celular */
+.kaibora-app {
+    width: 100%;
+    max-width: 420px;
+    height: 800px;
+    background-color: #050a05; /* Verde muito escuro */
+    border: 3px solid #00ff41;
+    box-shadow: 0 0 15px #00ff41, inset 0 0 10px rgba(0, 255, 65, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* --- CABEÇALHO --- */
+.app-header {
+    background-color: #111;
+    border-bottom: 2px solid #00ff41;
+    padding: 5px 10px;
+    font-size: 0.8em;
+}
+.header-top {
+    text-align: center;
+    font-weight: bold;
+    border-bottom: 1px dashed #00ff41;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+.header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #aaa;
+}
+.header-info span {
+    flex: 1;
+    text-align: center;
+}
+.header-info span:first-child {
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.header-info span:last-child {
+    text-align: right;
+}
+.header-info #nome-aventureiro-header {
+    color: #00ff41;
+    font-weight: bold;
+}
+#game-clock {
+    font-weight: bold;
+    color: #ffc; /* Amarelo pálido */
+    font-size: 1.1em;
+}
+/* Status da Rede (Cabeçalho) */
+#rede-status {
+    font-weight: bold;
+    transition: color 0.5s;
+}
+#rede-status.status-ok {
+    color: #00ff41; /* Verde */
+}
+#rede-status.status-error {
+    color: #ff4141; /* Vermelho */
+    animation: pulse 2s infinite;
+}
+
+/* --- CORPO PRINCIPAL E ABAS --- */
+.app-body {
+    flex: 1; /* Ocupa todo o espaço restante */
+    padding: 10px;
+    overflow-y: auto; /* Permite rolar se tiver muito widget */
+}
+.tab-content.hidden {
+    display: none;
+}
+
+/* --- WIDGETS --- */
+.widget {
+    background-color: #111;
+    border: 1px solid #00ff41;
+    margin-bottom: 10px;
+}
+.widget-title {
+    font-size: 1em;
+    font-weight: bold;
+    background-color: #222;
+    padding: 8px;
+    margin: 0;
+    border-bottom: 1px solid #00ff41;
+}
+.widget-content {
+    padding: 10px;
+    font-size: 0.9em;
+}
+
+/* --- RODAPÉ (NAVEGAÇÃO COM SCROLL) --- */
+.app-nav {
+    display: flex;
+    border-top: 2px solid #00ff41;
+    background-color: #111;
+    /* Adiciona scroll horizontal */
+    overflow-x: auto; 
+    white-space: nowrap; 
+}
+.app-nav .nav-button {
+    flex: 0 0 auto; /* Impede que os botões encolham */
+    width: 110px;  /* Largura fixa para cada botão */
+    padding: 15px 5px;
+    text-align: center;
+    text-decoration: none;
+    color: #00ff41;
+    font-size: 0.9em; 
+    border-right: 1px dashed #00ff41;
+}
+.app-nav .nav-button:last-child {
+    border-right: none;
+}
+.app-nav .nav-button:hover {
+    background-color: #00ff41;
+    color: #000;
+}
+.app-nav .nav-button.active {
+    background-color: #00ff41;
+    color: #000;
+    font-weight: bold;
+}
+
+
+/* --- ESTILOS DE COMPONENTES --- */
+
+/* Alertas e Status (Aba Pessoal) */
+.alerta-evento {
+    color: #00ffff; /* Ciano/Azul claro */
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+.alerta-glitch {
+    color: #ff4141; /* Vermelho */
+    animation: glitch-text 3s infinite;
+}
+
+/* Rodízio (Aba Pessoal) */
+.rodizio-item {
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px dashed #222;
+}
+.rodizio-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.rodizio-titulo {
+    color: #ffc; /* Amarelo Pálido */
+    font-weight: bold;
+    margin: 0;
+}
+.rodizio-desc {
+    color: #aaa;
+    font-size: 0.9em;
+    margin: 2px 0 0 0;
+    font-style: italic;
+}
+.rodizio-dia-semana {
+    color: #00ff41;
+    font-weight: bold;
+    margin: 10px 0 5px 0;
+    border-bottom: 1px dashed #222;
+    padding-bottom: 5px;
+}
+.rodizio-dia-semana:first-child { margin-top: 0; }
+
+/* Agenda (Tarefas, Cronogramas, Informes) */
+#informes-widget-content {
+    max-height: 200px;
+    overflow-y: auto;
+    background: #000;
+    border: 1px solid #222;
+}
+.log-entry {
+    color: #aaa;
+    font-size: 0.9em;
+    margin: 0 0 5px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed #222;
+}
+.log-time {
+    color: #00ff41; /* Verde */
+    font-weight: bold;
+}
+
+/* Stats (Aba Pessoal e Inventário) */
+.stats-grid {
+    display: grid;
+    grid-template-columns: auto 1fr; /* Coluna 1 (Label) e Coluna 2 (Valor) */
+    gap: 8px 15px;
+}
+.stats-grid strong {
+    color: #aaa;
+    text-align: right;
+    font-weight: normal;
+}
+.stats-grid span {
+    color: #fff;
+    font-weight: bold;
+}
+.stats-valor {
+    color: #00ff41 !important; /* Verde */
+    font-size: 1.2em;
+}
+.stats-habilidades {
+    color: #ccc;
+    font-style: italic;
+    background-color: #000;
+    padding: 10px;
+    border: 1px dashed #222;
+    min-height: 50px;
+}
+
+/* Inventário (Aba Inventário) */
+.inventario-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed #222;
+}
+.item-nome {
+    color: #fff;
+    font-weight: bold;
+}
+.item-quantia {
+    color: #00ff41; /* Verde */
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+/* Loja (Aba Loja) */
+.loja-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #222;
+}
+.loja-item:last-child { border-bottom: none; }
+.loja-item-info {
+    display: flex;
+    flex-direction: column;
+    padding-right: 10px;
+}
+.loja-item-nome {
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+.loja-item-desc {
+    color: #aaa;
+    font-size: 0.9em;
+    font-style: italic;
+}
+.btn-comprar {
+    flex-shrink: 0; /* Impede que o botão encolha */
+}
+.btn-comprar:disabled, .filtro-btn:disabled {
+    background-color: #888 !important;
+    color: #111 !important;
+    cursor: not-allowed;
+    border-color: #888;
+}
+
+/* Rede (Aba Rede) */
+#chat-guilda-window {
+    height: 200px; /* Altura fixa */
+    overflow-y: auto; /* Scroll */
+    background-color: #000;
+    border: 1px solid #222;
+    padding: 10px;
+}
+.chat-msg {
+    margin: 0 0 5px 0;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed #222;
+    color: #ccc;
+    font-size: 0.9em;
+}
+.chat-user {
+    font-weight: bold;
+    color: #ffc; /* Amarelo pálido para outros jogadores */
+}
+.chat-user-self {
+    font-weight: bold;
+    color: #00ff41; /* Verde para o próprio jogador */
+    font-style: italic;
+}
+.chat-input-area {
+    display: flex;
+    padding: 10px;
+    background-color: #111;
+    border: 1px solid #222;
+    border-top: none;
+}
+#chat-input {
+    flex: 1;
+    background-color: #0d0d0d;
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    font-family: 'Roboto Mono', monospace;
+    padding: 8px;
+    margin-right: 5px;
+}
+.chat-input-area button {
+    background-color: #00ff41;
+    color: #0d0d0d;
+    border: none;
+    padding: 8px 10px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+}
+.chat-input-area button:hover { background-color: #fff; }
+.rede-jogador-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px dashed #222;
+}
+.rede-jogador-item:last-child { border-bottom: none; }
+.rede-status-online {
+    color: #00ff41; /* Verde */
+    font-weight: bold;
+}
+.rede-status-offline {
+    color: #888;
+    font-style: italic;
+}
+
+/* Mapeamento (Aba Mapeamento) */
+.map-filtros {
+    padding-bottom: 10px;
+}
+.filtro-btn {
+    color: #00ff41;
+    text-decoration: none;
+    border: 1px solid #00ff41;
+    padding: 3px 5px;
+    margin-left: 5px;
+    font-size: 0.9em;
+}
+.filtro-btn:hover {
+    background-color: #00ff41;
+    color: #000;
+}
+.filtro-btn.filtro-off {
+    color: #888;
+    border-color: #888;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Mapa 3D (Iframe) */
+.map-container-3d {
+    background-color: #000;
+    border: 1px solid #00ff41;
+    padding: 5px;
+    height: 300px;
+    display: flex;
+}
+#mapa-3d-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: #333; /* Cor de fundo enquanto carrega */
+}
+
+/* Formulário de Esboço 2D */
+.form-multi-input {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background-color: #111;
+    border: 1px solid #222;
+}
+.form-multi-input input,
+.form-multi-input textarea {
+    background-color: #0d0d0d;
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    font-family: 'Roboto Mono', monospace;
+    padding: 10px;
+}
+.form-multi-input textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* Arquivos (Aba Arquivos) */
+.file-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed #222;
+    padding: 5px 0;
+}
+.file-item:last-child { border-bottom: none; }
+.file-entry.file-locked {
+    color: #888;
+    font-style: italic;
+}
+.file-entry.file-found {
+    color: #fff;
+    font-weight: bold;
+}
+.btn-usar {
+    background-color: #005a9c;
+    color: #fff;
+    border: none;
+    padding: 5px 8px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+.btn-usar:hover { background-color: #0078d4; }
+.file-status-loaded {
+    color: #00ff41;
+    font-weight: bold;
+    font-size: 0.9em;
+    font-style: italic;
+}
+.btn-backup {
+    background-color: #005a9c;
+    color: #fff;
+    border: 1px solid #0078d4;
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+}
+.btn-backup:hover { background-color: #0078d4; }
+.btn-debug {
+    background-color: #a80;
+    color: #fff;
+    border: 1px solid #ffc;
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+}
+.btn-debug:hover { background-color: #ff0; color: #000; }
+.alerta-ok {
+    color: #00ff41;
+    font-weight: bold;
+}
+
+/* Modal P2P (Troca/Chat) */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+.modal-backdrop.hidden {
+    display: none;
+}
+.modal-content {
+    background-color: #1a1a1a;
+    border: 2px solid #00ff41;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 0 20px #00ff41;
+    position: relative;
+}
+.modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: 1px solid #ff4141;
+    color: #ff4141;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+}
+.modal-close:hover {
+    background: #ff4141;
+    color: #000;
+}
+.modal-content h3 {
+    padding: 15px;
+    margin: 0;
+    border-bottom: 1px dashed #444;
+}
+.modal-nav {
+    display: flex;
+    background-color: #222;
+}
+.modal-tab-btn {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    text-decoration: none;
+    color: #888;
+    border-bottom: 2px solid #222;
+}
+.modal-tab-btn.active {
+    color: #00ff41;
+    font-weight: bold;
+    border-bottom: 2px solid #00ff41;
+}
+.modal-tab-content {
+    padding: 20px;
+}
+
+/* Formulário de Troca */
+.form-troca {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+.form-troca input {
+    flex: 1;
+    background-color: #0d0d0d;
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    font-family: 'Roboto Mono', monospace;
+    padding: 10px;
+}
+.form-troca .filtro-btn {
+    height: 40px;
+    padding: 10px;
+}
+#troca-error {
+    margin-top: 10px;
+    padding: 10px;
+    background: #400;
+    border: 1px solid #ff4141;
+}
+
+/* Animações */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+@keyframes glitch-text {
+    2% { transform: translate(1px, -1px); }
+    4% { transform: translate(-1px, 1px); }
+    100% { transform: translate(0, 0); }
+}

@@ -1,0 +1,662 @@
+/* Importa a fonte do terminal */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+body {
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    font-family: 'Roboto Mono', monospace;
+    margin: 0;
+    padding: 0;
+}
+
+/* Cabeçalho do GM */
+.gm-header {
+    background-color: #a00; /* Vermelho escuro */
+    color: #fff;
+    padding: 10px 20px;
+    border-bottom: 4px solid #f00;
+    text-align: center;
+}
+
+.gm-header h1 {
+    margin: 0;
+    font-size: 1.8em;
+}
+
+/* Layout */
+.gm-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 20px;
+}
+
+.gm-coluna {
+    flex: 1;
+    min-width: 300px;
+    margin: 10px;
+}
+
+/* Widgets */
+.gm-widget {
+    background-color: #2a2a2a;
+    border: 1px solid #888;
+    margin-bottom: 20px;
+}
+
+.gm-widget h3 {
+    background-color: #444;
+    padding: 10px;
+    margin: 0;
+    border-bottom: 1px solid #888;
+}
+
+.gm-widget .widget-content {
+    padding: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Formulários */
+form {
+    padding: 15px;
+    display: flex;
+}
+form input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    background-color: #1a1a1a;
+    border: 1px solid #888;
+    color: #f0f0f0;
+    font-family: 'Roboto Mono', monospace;
+}
+form button {
+    background-color: #a00;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+}
+form button:hover {
+    background-color: #f00;
+}
+
+/* Listas */
+ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+ul li {
+    padding: 10px;
+    border-bottom: 1px dashed #444;
+}
+ul li:last-child {
+    border: none;
+}
+ul li strong {
+    color: #ffc; /* Amarelo pálido */
+}
+ul li em {
+    color: #aaa;
+}
+
+/* Status da Tarefa */
+.status-ativa {
+    color: #00ff41; /* Verde */
+    font-weight: bold;
+}
+.status-pendente {
+    color: #f0f0f0;
+}
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+/* Botão de alerta (Limpar) */
+.btn-warn {
+    background-color: #700;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+}
+.btn-warn:hover {
+    background-color: #f00;
+}
+
+/* Lista de tarefas interativa */
+#lista-tarefas li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-task-status, .btn-task-delete {
+    border: none;
+    color: #fff;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 5px 8px;
+    font-size: 0.8em;
+}
+
+.btn-task-status {
+    background-color: #080; /* Verde */
+}
+.btn-task-status:hover {
+    background-color: #0f0;
+}
+
+.status-ativa .btn-task-status {
+    background-color: #a80; /* Amarelo (para desativar) */
+}
+.status-ativa .btn-task-status:hover {
+    background-color: #ff0;
+}
+
+.btn-task-delete {
+    background-color: #a00; /* Vermelho */
+}
+.btn-task-delete:hover {
+    background-color: #f00;
+}
+.item-cronograma {
+    color: #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+/* Novo formulário de Cronograma */
+.form-cronograma {
+    display: flex;
+}
+.form-cronograma input[type="time"] {
+    background-color: #1a1a1a;
+    border: 1px solid #888;
+    color: #f0f0f0;
+    font-family: 'Roboto Mono', monospace;
+    padding: 8px;
+    margin-right: 5px;
+}
+.form-cronograma input[type="text"] {
+    flex: 1;
+}
+.form-cronograma button {
+    flex-basis: 50px; /* Largura fixa para o botão [ADD] */
+}
+
+/* Deixa o texto do cronograma em negrito */
+.item-cronograma strong {
+    color: #ffc; /* Amarelo pálido */
+}
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+
+/* Novo Formulário de Definir Tempo */
+.time-set-form {
+    display: flex;
+    padding: 10px;
+    border-top: 1px dashed #444;
+}
+.time-set-form input {
+    width: 33.3%;
+    margin-right: 5px;
+    background-color: #1a1a1a;
+    border: 1px solid #888;
+    color: #f0f0f0;
+    font-family: 'Roboto Mono', monospace;
+    padding: 10px;
+}
+.time-set-form button {
+    background-color: #a80; /* Amarelo/Ouro */
+    color: #fff;
+    border: none;
+    padding: 10px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+}
+.time-set-form button:hover {
+    background-color: #ff0;
+    color: #000;
+}
+
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+/* Estilo para a lista de jogadores registrados */
+.jogador-item {
+    font-size: 1.1em;
+}
+
+/* Novo Widget de Rodízio */
+.rodizio-info {
+    font-size: 0.9em;
+    color: #aaa;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #444;
+}
+
+.rodizio-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #444;
+}
+.rodizio-item:last-child {
+    border-bottom: none;
+}
+
+.rodizio-texto {
+    display: flex;
+    flex-direction: column;
+}
+
+.rodizio-texto strong {
+    font-size: 1.1em;
+    color: #ffc; /* Amarelo pálido */
+}
+
+.rodizio-texto em {
+    font-size: 0.9em;
+    color: #aaa;
+}
+
+/* --- REMOVA o CSS de .rodizio-item, .rodizio-texto, .rodizio-select, etc. --- */
+/* --- E SUBSTITUA por este: --- */
+
+/* Novo formulário de Múltiplas Linhas (para Rodízio) */
+.form-multi-input {
+    display: flex;
+    flex-direction: column; /* Inputs um em cima do outro */
+    padding: 15px;
+    border-bottom: 1px dashed #444;
+}
+.form-multi-input input {
+    width: 95%; /* Ocupa a largura toda */
+    padding: 10px;
+    background-color: #1a1a1a;
+    border: 1px solid #888;
+    color: #f0f0f0;
+    font-family: 'Roboto Mono', monospace;
+    margin-bottom: 10px;
+}
+.form-multi-input button {
+    background-color: #a00;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+}
+.form-multi-input button:hover {
+    background-color: #f00;
+}
+
+/* (Botão de Rotação foi removido, então btn-rotate não é mais necessário) */
+
+/* Nova lista de Atribuições de Hoje */
+.rodizio-item-gm {
+    font-size: 1.1em;
+    padding: 5px;
+    color: #f0f0f0;
+}
+.rodizio-item-gm strong {
+    color: #ffc; /* Amarelo pálido */
+}
+
+/* Divisor */
+.rodizio-hr {
+    border: none;
+    border-top: 1px dashed #444;
+    margin: 15px 0;
+}
+
+/* Estilo do Dropdown (<select>) */
+.rodizio-select {
+    background-color: #1a1a1a;
+    border: 1px solid #888;
+    color: #f0f0f0;
+    font-family: 'Roboto Mono', monospace;
+    padding: 8px;
+    font-size: 1em;
+}
+.rodizio-select:focus {
+    outline: none;
+    border-color: #f00; /* Vermelho GM */
+}
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+/* Novo formulário de Múltiplas Linhas (para Rodízio) */
+.form-multi-input {
+    display: flex;
+    flex-direction: column; /* Inputs um em cima do outro */
+    padding: 15px;
+    border-bottom: 1px dashed #444;
+}
+
+.form-multi-input input {
+    width: 95%; /* Ocupa a largura toda */
+    padding: 10px;
+    background-color: #1a1a1a;
+    border: 1px solid #888;
+    color: #f0f0f0;
+    font-family: 'Roboto Mono', monospace;
+    margin-bottom: 10px;
+}
+
+.form-multi-input button {
+    background-color: #a00;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+}
+.form-multi-input button:hover {
+    background-color: #f00;
+}
+/* Estilo para item da lista de jogador */
+.jogador-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1em;
+}
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+/* Estilo para item da lista de jogador (ATUALIZADO) */
+.jogador-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1em;
+}
+
+.jogador-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.jogador-info strong {
+    color: #ffc; /* Amarelo pálido */
+}
+
+.jogador-info em {
+    font-size: 0.9em;
+    color: #aaa;
+}
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+/* Nova Barra de Navegação do GM */
+.gm-nav {
+    background-color: #333;
+    border-bottom: 2px solid #f00;
+    display: flex;
+}
+.gm-nav a {
+    color: #fff;
+    padding: 14px 20px;
+    text-decoration: none;
+    font-weight: bold;
+}
+.gm-nav a:hover {
+    background-color: #555;
+}
+.gm-nav a.active {
+    background-color: #a00;
+}
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+/* Estilo para o novo Hub de Jogadores */
+.jogador-hub-item {
+    background-color: #333;
+    border: 1px solid #555;
+    margin-bottom: 15px;
+    padding: 10px;
+}
+.jogador-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed #555;
+    padding-bottom: 5px;
+}
+.jogador-info-header strong {
+    color: #ffc; /* Amarelo pálido */
+    font-size: 1.2em;
+}
+
+/* Grade de Stats */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 colunas */
+    gap: 5px;
+    margin: 10px 0;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+/* Formulário de Ajuste (Banco Central) */
+.form-adjust-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.stat-adjust-input {
+    width: 95%;
+    padding: 8px;
+    background-color: #1a1a1a;
+    border: 1px solid #888;
+    color: #f0f0f0;
+    font-family: 'Roboto Mono', monospace;
+}
+.btn-adjust {
+    background-color: #a80; /* Amarelo/Ouro */
+    color: #fff;
+    border: none;
+    padding: 8px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 5px;
+}
+.btn-adjust:hover {
+    background-color: #ff0;
+    color: #000;
+}
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+/* Novo Widget da Loja */
+.loja-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #444;
+}
+.loja-item-info {
+    display: flex;
+    flex-direction: column;
+}
+.loja-item-info strong {
+    font-size: 1.1em;
+    color: #f0f0f0;
+}
+.loja-item-info em {
+    font-size: 0.9em;
+    color: #aaa;
+}
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+/* Novo Widget de Controle do Habitat */
+.sistema-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed #444;
+}
+.sistema-item:last-child {
+    border-bottom: none;
+}
+
+.sistema-item strong {
+    font-size: 1.1em;
+    color: #f0f0f0;
+}
+.btn-status-toggle {
+    border: none;
+    padding: 8px 12px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    cursor: pointer;
+    min-width: 130px; /* Largura fixa */
+}
+.status-funcional {
+    background-color: #080; /* Verde */
+    color: #fff;
+}
+.status-funcional:hover {
+    background-color: #0f0;
+    color: #000;
+}
+.status-danificado {
+    background-color: #a00; /* Vermelho */
+    color: #fff;
+    animation: pulse-red-bg 1.5s infinite;
+}
+.status-danificado:hover {
+    background-color: #f00;
+}
+
+/* Animação para o botão danificado */
+@keyframes pulse-red-bg {
+    0% { background-color: #a00; }
+    50% { background-color: #f33; }
+    100% { background-color: #a00; }
+}
+/* --- ADICIONAR AO FINAL DE kaibora.css --- */
+
+/* Ajuste do Footer para 7 ABAS */
+.app-nav .nav-button {
+    font-size: 0.75em; /* Reduzido para caber 7 */
+    padding: 15px 2px;
+}
+
+/* Estilo para o formulário de Esboço 2D */
+.form-multi-input {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background-color: #111;
+    border: 1px solid #222;
+}
+.form-multi-input input,
+.form-multi-input textarea {
+    background-color: #0d0d0d;
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    font-family: 'Roboto Mono', monospace;
+    padding: 10px;
+}
+.form-multi-input textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+/* --- ADICIONAR AO FINAL DE gm.css --- */
+
+/* Estilos para o Novo Mapa de Rastreamento (GM) */
+.map-grid-gm {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 colunas */
+    gap: 5px;
+}
+.map-grid-gm .grid-square {
+    height: 120px; /* Mais alto para caber os nomes */
+    background-color: #222;
+    border: 1px solid #444;
+    color: #aaa;
+    font-size: 0.9em;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+}
+.grid-title {
+    font-weight: bold;
+    color: #fff;
+    border-bottom: 1px dashed #555;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+}
+.grid-ocupantes {
+    /* Onde os nomes/pins aparecem */
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow-y: auto; /* Adiciona scroll se muitos jogadores/npcs */
+}
+.loc-pino {
+    display: block;
+    padding: 2px 4px;
+    font-size: 0.9em;
+    border-radius: 3px;
+}
+.loc-jogador { /* Jogador (Verde) */
+    background-color: #050;
+    border: 1px solid #0f0;
+    color: #0f0;
+}
+.loc-npc { /* NPC (Azul) */
+    background-color: #004a8c;
+    border: 1px solid #0078d4;
+    color: #9cdcfe;
+}
+
+/* Gerenciador de NPCs */
+.npc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed #444;
+    padding: 10px 0;
+}
+.npc-info {
+    display: flex;
+    flex-direction: column;
+}
+.npc-info strong {
+    font-size: 1.1em;
+    color: #9cdcfe; /* Azul (para diferenciar de Jogador) */
+}
+.npc-info em {
+    font-size: 0.9em;
+    color: #aaa;
+}
+.npc-controls {
+    display: flex;
+    gap: 5px;
+}
+.npc-move-select {
+    background-color: #1a1a1a;
+    border: 1px solid #888;
+    color: #f0f0f0;
+    font-family: 'Roboto Mono', monospace;
+    padding: 5px;
+}

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GM - Painel de Controle</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='gm.css') }}">
+</head>
+<body>
+    <header class="gm-header">
+        <h1>TERMINAL MESTRE DA GUILDA</h1>
+        <p>Acesso: Game Master (Nível 99) | Tempo do Jogo: [SINCRONIZADO COM RELÓGIO REAL]</p>
+    </header>
+    
+    <nav class="gm-nav">
+        <a href="/gm" class="active">Painel de Controle (Eventos)</a>
+        <a href="/gm-hub">Hub de Gerenciamento (Jogadores)</a>
+        <a href="/gm-loja">Hub da Loja (Economia)</a>
+    </nav>
+    
+    <div class="gm-container">
+        <div class="gm-coluna">
+            <div class="gm-widget">
+                <h3>ENVIAR ALERTA GLOBAL</h3>
+                <form id="form-alerta">
+                    <input type="text" id="alerta-texto" placeholder="Mensagem de alerta (ex: Falha no Setor 4)" required>
+                    <button type="submit">[ENVIAR ALERTA]</button>
+                </form>
+                <button id="btn-clear-alertas" class="btn-warn">[LIMPAR TODOS OS ALERTAS]</button>
+            </div>
+            
+            <div class="gm-widget">
+                <h3>ADICIONAR INFORME MANUAL (Log)</h3>
+                <form id="form-informe">
+                    <input type="text" id="informe-texto" placeholder="Informe manual (ex: 'Uma tempestade se aproxima...')" required>
+                    <button type="submit">[ADICIONAR AO REGISTRO]</button>
+                </form>
+            </div>
+            
+            <div class="gm-widget">
+                <h3>GERENCIADOR DE TAREFAS (Quests)</h3>
+                <form id="form-tarefa" class="form-multi-input">
+                    <input type="text" id="tarefa-texto" placeholder="Descrição da Tarefa (ex: Investigar caverna)" required>
+                    <div class="form-row">
+                        <input type="number" id="tarefa-xp" placeholder="XP (ex: 50)" required>
+                        <input type="number" id="tarefa-kc" placeholder="KÇ (ex: 10)" required>
+                    </div>
+                    <button type="submit">[ADICIONAR TAREFA (Quest)]</button>
+                </form>
+                <div class="widget-content">
+                    <h4>Tarefas Ativas no Sistema:</h4>
+                    <ul id="lista-tarefas"><li>Carregando...</li></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="gm-coluna">
+            <div class="gm-widget">
+                <h3>CONTROLE DOS SISTEMAS DO HABITAT</h3>
+                <div class="widget-content">
+                    <ul id="lista-sistemas-habitat">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="gm-widget">
+                <h3>RELATÓRIO DE MAPEAMENTO (Esboços 2D)</h3>
+                <div class="widget-content log-window"> <ul id="lista-esbocos">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        
+            <div class="gm-widget">
+                <h3>GERENCIADOR DE CRONOGRAMAS (Eventos)</h3>
+                <form id="form-cronograma" class="form-cronograma">
+                    <input type="time" id="cronograma-hora" required>
+                    <input type="text" id="cronograma-texto" placeholder="Nome do Evento (ex: Café da Manhã)" required>
+                    <button type="submit">[ADD]</button>
+                </form>
+                <div class="widget-content">
+                    <h4>Eventos Agendados: (Baseado no Relógio Real)</h4>
+                    <ul id="lista-cronogramas"><li>Carregando...</li></ul>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        let listaDeJogadores = [];
+    
+        // --- FUNÇÕES DE CARREGAMENTO (READ) ---
+        
+        async function carregarJogadoresParaDropdown() {
+            try {
+                const response = await fetch('/api/jogadores');
+                const jogadores = await response.json(); 
+                listaDeJogadores = jogadores;
+            } catch (err) { console.error('Erro ao carregar jogadores:', err); }
+        }
+        
+        async function carregarTarefas() { 
+            try {
+                const response = await fetch('/api/tarefas');
+                const tarefas = await response.json();
+                const lista = document.getElementById('lista-tarefas');
+                lista.innerHTML = ''; 
+                tarefas.forEach(t => {
+                    lista.innerHTML += `
+                        <li class="tarefa-item">
+                            <div class="tarefa-info">
+                                <strong>${t.texto}</strong>
+                                <em>(+${t.xp_reward} XP, +${t.kc_reward} KÇ)</em>
+                            </div>
+                            <div class="task-buttons">
+                                ${criarDropdownCompletar(t.id)}
+                                <button class="btn-task-delete" data-id="${t.id}">[X]</button>
+                            </div>
+                        </li>`;
+                });
+            } catch (err) { console.error('Erro ao carregar tarefas:', err); }
+        }
+        
+        function criarDropdownCompletar(tarefaId) {
+            let html = `<select class="tarefa-complete-select" data-id="${tarefaId}">`;
+            html += `<option value="">[COMPLETAR POR...]</option>`;
+            listaDeJogadores.forEach(j => {
+                html += `<option value="${j.nome_aventureiro}">${j.nome_aventureiro}</option>`;
+            });
+            html += `</select>`;
+            return html;
+        }
+        
+        async function carregarCronogramas() { 
+            try {
+                const response = await fetch('/api/cronogramas');
+                const cronogramas = await response.json(); 
+                const lista = document.getElementById('lista-cronogramas');
+                lista.innerHTML = ''; 
+                cronogramas.forEach(c => {
+                    const horaFmt = String(c.hora).padStart(2, '0');
+                    const minFmt = String(c.minuto).padStart(2, '0');
+                    lista.innerHTML += `
+                        <li class="item-cronograma">
+                            <span><strong>${horaFmt}:${minFmt}</strong> - ${c.texto}</span>
+                            <div class="task-buttons">
+                                <button class="btn-cron-delete btn-task-delete" data-id="${c.id}">[X]</button>
+                            </div>
+                        </li>`;
+                });
+            } catch (err) { console.error('Erro ao carregar cronogramas:', err); }
+        }
+
+        async function carregarSistemasHabitat() {
+             try {
+                const response = await fetch('/api/habitat/sistemas');
+                const sistemas = await response.json();
+                const lista = document.getElementById('lista-sistemas-habitat');
+                lista.innerHTML = ''; 
+                sistemas.forEach(s => {
+                    const isFuncional = s.status === 'FUNCIONAL';
+                    const statusClass = isFuncional ? 'status-funcional' : 'status-danificado';
+                    const statusText = isFuncional ? '[ FUNCIONAL ]' : '[ DANIFICADO ]';
+                    lista.innerHTML += `
+                        <li class="sistema-item">
+                            <span><strong>${s.nome}</strong> (${s.setor})</span>
+                            <button class="btn-status-toggle ${statusClass}" data-id="${s.id}">
+                                ${statusText}
+                            </button>
+                        </li>`;
+                });
+            } catch (err) { console.error('Erro ao carregar sistemas do habitat:', err); }
+        }
+        
+        // --- NOVA FUNÇÃO: Carregar Relatório de Esboços ---
+        async function carregarEsbocos() {
+            try {
+                const response = await fetch('/api/mapa/esbocos');
+                const esbocos = await response.json();
+                const lista = document.getElementById('lista-esbocos');
+                lista.innerHTML = ''; 
+                
+                if (esbocos.length === 0) {
+                    lista.innerHTML = '<li>Nenhum esboço 2D enviado.</li>';
+                }
+                
+                esbocos.forEach(e => {
+                    lista.innerHTML += `
+                        <li class="log-entry">
+                            <span class="log-time">[${e.timestamp}] ${e.nome_autor}</span>
+                            mapeou <strong>${e.nome_setor}</strong>.
+                            <em>Notas: "${e.notas || 'Nenhuma'}"</em>
+                        </li>`;
+                });
+            } catch (err) { console.error('Erro ao carregar esboços:', err); }
+        }
+
+        // --- FUNÇÕES DE ENVIO (CREATE) ---
+        document.getElementById('form-alerta').addEventListener('submit', async (e) => { e.preventDefault(); const texto = document.getElementById('alerta-texto').value; if (!texto) return; await fetch('/api/alertas', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ texto: texto }) }); alert('Alerta enviado!'); document.getElementById('alerta-texto').value = ''; });
+        document.getElementById('form-cronograma').addEventListener('submit', async (e) => { e.preventDefault(); const hora = document.getElementById('cronograma-hora').value; const texto = document.getElementById('cronograma-texto').value; if (!texto || !hora) return; await fetch('/api/cronogramas', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ hora: hora, texto: texto }) }); document.getElementById('cronograma-hora').value = ''; document.getElementById('cronograma-texto').value = ''; carregarCronogramas(); });
+        document.getElementById('form-tarefa').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const texto = document.getElementById('tarefa-texto').value;
+            const xp = document.getElementById('tarefa-xp').value;
+            const kc = document.getElementById('tarefa-kc').value;
+            if (!texto || !xp || !kc) return;
+            await fetch('/api/tarefas', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ texto: texto, xp_reward: xp, kc_reward: kc })
+            });
+            document.getElementById('tarefa-texto').value = '';
+            document.getElementById('tarefa-xp').value = '';
+            document.getElementById('tarefa-kc').value = '';
+            carregarTarefas(); 
+        });
+        document.getElementById('form-informe').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const texto = document.getElementById('informe-texto').value;
+            if (!texto) return;
+            await fetch('/api/informes', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ texto: texto })
+            });
+            alert('Informe manual adicionado ao registro.');
+            document.getElementById('informe-texto').value = '';
+        });
+
+        // --- FUNÇÕES DE GERENCIAMENTO (DELETE / UPDATE) ---
+        document.getElementById('btn-clear-alertas').addEventListener('click', async () => { if (confirm('Limpar TODOS os alertas globais?')) { await fetch('/api/alertas', { method: 'DELETE' }); alert('Alertas limpos.'); } });
+        document.getElementById('lista-cronogramas').addEventListener('click', async (e) => { const id = e.target.dataset.id; if (!id) return; if (e.target.classList.contains('btn-cron-delete')) { if (confirm('REMOVER este evento?')) { await fetch(`/api/cronogramas/${id}`, { method: 'DELETE' }); carregarCronogramas(); } } });
+        document.getElementById('lista-tarefas').addEventListener('change', async (e) => {
+            if (e.target.classList.contains('tarefa-complete-select')) {
+                const tarefaId = e.target.dataset.id;
+                const nomeJogador = e.target.value;
+                if (!nomeJogador) return;
+                if (confirm(`Dar recompensa da tarefa para "${nomeJogador}" e marcar como concluída?`)) {
+                    await fetch(`/api/tarefas/${tarefaId}/complete`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ aventureiro_nome: nomeJogador })
+                    });
+                    carregarTarefas();
+                } else { e.target.value = ""; }
+            }
+        });
+        document.getElementById('lista-tarefas').addEventListener('click', async (e) => {
+            if (e.target.classList.contains('btn-task-delete')) {
+                const tarefaId = e.target.dataset.id;
+                if (!tarefaId) return;
+                if (confirm('REMOVER esta tarefa (sem dar recompensa)?')) {
+                    await fetch(`/api/tarefas/${tarefaId}`, { method: 'DELETE' });
+                    carregarTarefas();
+                }
+            }
+        });
+        
+        document.getElementById('lista-sistemas-habitat').addEventListener('click', async (e) => {
+            if (e.target.classList.contains('btn-status-toggle')) {
+                const id = e.target.dataset.id;
+                if (!id) return;
+                const acao = e.target.classList.contains('status-funcional') ? 'DANIFICAR' : 'REPARAR';
+                if (confirm(`Tem certeza que deseja ${acao} este sistema?`)) {
+                    await fetch(`/api/habitat/sistemas/${id}/status`, { method: 'PUT' });
+                    carregarSistemasHabitat();
+                    carregarTarefas(); 
+                }
+            }
+        });
+
+        // --- INICIALIZAÇÃO (Carrega tudo em ordem) ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await carregarJogadoresParaDropdown(); 
+            await carregarTarefas();
+            await carregarCronogramas();
+            await carregarSistemasHabitat();
+            await carregarEsbocos(); // <-- NOVO
+        });
+    </script>
+</body>
+</html>

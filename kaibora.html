@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Kaibora</title>
+    <link rel="stylesheet" href="kaibora.css">
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00ff41"/>
+    <link rel="apple-touch-icon" href="static/icon.png">
+    </head>
+<body>
+    
+    <div class="kaibora-app">
+        <header class="app-header">
+            <div class="header-top">
+                <span>= GUIA KAIBORA v1.3 (Ramo: AROP1AK) =</span>
+            </div>
+            <div class="header-info">
+                <span>USUÁRIO: <span id="nome-aventureiro-header">...</span></span>
+                <span id="game-clock">--/--, --:--</span>
+                <span>REDE: <span id="rede-status" class="status-error">[CONECTANDO...]</span></span>
+            </div>
+        </header>
+
+        <main class="app-body">
+            <div id="pessoal-content" class="tab-content">
+                <div class="widget">
+                    <h3 class="widget-title">[WIDGET: STATUS DO AVENTUREIRO]</h3>
+                    <div class="widget-content">
+                        <div class="stats-grid">
+                            <strong>Nível:</strong>
+                            <span id="stats-nivel" class="stats-valor">1</span>
+                            <strong>XP (Experiência):</strong>
+                            <span id="stats-xp" class="stats-valor">0</span>
+                            <strong>KÇ (Kaicons):</strong>
+                            <span id="stats-kc" class="stats-valor">0</span>
+                        </div>
+                    </div>
+                 </div>
+                 <div class="widget">
+                    <h3 class="widget-title">[WIDGET: MINHAS RESPONSABILIDADES]</h3>
+                    <div class="widget-content" id="rodizio-widget-content">
+                        </div>
+                </div>
+                <div class="widget">
+                    <h3 class="widget-title">[WIDGET: ALERTAS DA GUILDA]</h3>
+                    <div class="widget-content" id="alertas-widget-content">
+                        </div>
+                </div>
+            </div>
+            
+            <div id="agenda-content" class="tab-content hidden">
+                <div class="widget">
+                    <h3 class="widget-title">[WIDGET: TAREFAS DIÁRIAS (Quests)]</h3>
+                    <div class="widget-content" id="tarefas-widget-content">
+                        </div>
+                </div>
+                <div class="widget">
+                    <h3 class="widget-title">[WIDGET: CRONOGRAMAS DO HABITAT]</h3>
+                    <div class="widget-content" id="cronogramas-widget-content">
+                        </div>
+                </div>
+                 <div class="widget">
+                    <h3 class="widget-title">[WIDGET: REGISTRO DE INFORMES]</h3>
+                    <div class="widget-content" id="informes-widget-content">
+                        </div>
+                </div>
+            </div>
+            
+            <div id="mapeamento-content" class="tab-content hidden">
+                 <div class="widget">
+                    <h3 class="widget-title">[MAPA 3D (BKP ANTIGO)]</h3>
+                    <div class="widget-content">
+                        <p class="rodizio-desc">Visualizando BKP da ENFF (metaverso 3D). Dados podem estar desatualizados.</p>
+                        <div class="map-filtros">
+                            <span>FILTROS (Manuscritos):</span>
+                            <a href="#" id="filtro-hidro" class="filtro-btn filtro-off">[Hidro]</a>
+                            <a href="#" id="filtro-eletrico" class="filtro-btn filtro-off">[Elétrico]</a>
+                            <a href="#" id="filtro-rede" class="filtro-btn filtro-off">[Rede]</a>
+                        </div>
+                    </div>
+                    <div class="map-container-3d">
+                        <iframe id="mapa-3d-frame" src="about:blank" title="Mapa 3D do Habitat"></iframe>
+                    </div>
+                </div>
+                <div class="widget">
+                    <h3 class="widget-title">[FERRAMENTA DE ESBOÇO 2D]</h3>
+                    <form id="form-esboco" class="form-multi-input">
+                        <p class="rodizio-desc">Envie um esboço 2D do setor atual para atualizar o BKP antigo da Kaibora.</p>
+                        <input type="text" id="esboco-setor" placeholder="Nome do Setor (ex: Setor 4 - Refeitório)" required>
+                        <textarea id="esboco-notas" rows="3" placeholder="Notas do mapeamento (ex: 'Parede leste desabada, novo túnel ao norte...')"></textarea>
+                        <button type="submit" class="btn-backup">[ENVIAR ESBOÇO PARA KAI BORA]</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="inventario-content" class="tab-content hidden">
+                <div class="widget">
+                    <h3 class="widget-title">[FICHA DE AVENTUREIRO]</h3>
+                    <div class="widget-content">
+                        <div class="stats-grid">
+                            <strong>Nome:</strong>
+                            <span id="stats-nome-aventureiro">...</span>
+                            <strong>Login:</strong>
+                            <span id="stats-username">...</span>
+                            <strong>Classe/Origem:</strong>
+                            <span id="stats-classe">...</span>
+                        </div>
+                    </div>
+                 </div>
+                 <div class="widget">
+                    <h3 class="widget-title">[HABILIDADES]</h3>
+                    <div class="widget-content">
+                        <p id="stats-habilidades" class="stats-habilidades">
+                            (Nenhuma habilidade registrada...)
+                        </p>
+                    </div>
+                 </div>
+                <div class="widget">
+                    <h3 class="widget-title">[INVENTÁRIO PESSOAL]</h3>
+                    <div class="widget-content" id="inventario-widget-content">
+                        </div>
+                </div>
+            </div>
+            
+            <div id="loja-content" class="tab-content hidden">
+                <div class="widget">
+                    <h3 class="widget-title">[LOJA DA GUILDA]</h3>
+                    <div class="widget-content" id="loja-widget-content">
+                        </div>
+                </div>
+            </div>
+            
+            <div id="rede-content" class="tab-content hidden">
+                <div class="widget">
+                    <h3 class="widget-title">[CANAL DA GUILDA] (#guilda-chat)</h3>
+                    <div class="widget-content" id="chat-guilda-window">
+                        </div>
+                    <form id="chat-form" class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="Digite sua mensagem...">
+                        <button type="submit">[ENVIAR]</button>
+                    </form>
+                </div>
+                <div class="widget">
+                    <h3 class="widget-title">[MENSAGEIRO P2P (Aventureiros na Rede)]</h3>
+                    <div class="widget-content" id="rede-jogadores-widget">
+                        </div>
+                </div>
+            </div>
+            
+            <div id="arquivos-content" class="tab-content hidden">
+                <div class="widget">
+                    <h3 class="widget-title">[ARQUIVOS (CÓDICE LOCAL)]</h3>
+                    <div class="widget-content">
+                        <p>SINCRONIZANDO COM AROPIAK... <span id="bkp-status" class="alerta-glitch">[FALHA]</span></p>
+                        <p>MEMÓRIA LOCAL: <span id="memoria-local-usada">0%</span> / 1024MB</p>
+                    </div>
+                </div>
+                <div class="widget">
+                    <h3 class="widget-title">[MANUSCRITOS ENCONTRADOS (Desbloqueios)]</h3>
+                    <div class="widget-content file-list" id="lista-manuscritos">
+                        </div>
+                </div>
+                <div class="widget">
+                    <h3 class="widget-title">[INFORMAÇÕES DE SETOR (SCAN LOCAL)]</h3>
+                    <div class="widget-content file-list" id="lista-setores">
+                        </div>
+                </div>
+                <button id="btn-backup" class="btn-backup">
+                    [SINCRONIZAR COM O GERMINAL (BKP)]
+                </button>
+                <button id="btn-debug-arquivo" class="btn-debug">
+                    [DEBUG: Simular encontrar "Mapa Hidráulico"]
+                </button>
+            </div>
+        </main>
+        
+        <footer class="app-nav">
+            <a href="#" class="nav-button active" data-tab="pessoal">[PESSOAL]</a>
+            <a href="#" class="nav-button" data-tab="agenda">[AGENDA]</a>
+            <a href="#" class="nav-button" data-tab="mapeamento">[MAPEAMENTO]</a>
+            <a href="#" class="nav-button" data-tab="inventario">[INVENTÁRIO]</a>
+            <a href="#" class="nav-button" data-tab="loja">[LOJA]</a>
+            <a href="#" class="nav-button" data-tab="rede">[REDE]</a>
+            <a href="#" class="nav-button" data-tab="arquivos">[ARQUIVOS]</a>
+        </footer>
+    </div>
+    
+    <div id="p2p-modal-backdrop" class="modal-backdrop hidden" onclick="fecharModalP2P()">
+        </div>
+
+    <script>
+        let aventureiroNome = "[NÃO REGISTRADO]";
+        let destinatarioAtual = ""; 
+
+        // --- 0. Funções de Segurança ---
+        function getToken() { return localStorage.getItem('kaibora-token'); }
+        function checkLogin() {
+            const token = getToken();
+            if (!token) { window.location.href = 'login.html'; return false; }
+            return token;
+        }
+        
+        // --- NOVA FUNÇÃO: Atualiza o status da Rede ---
+        function setRedeStatus(isOnline, mensagem = "") {
+            const statusEl = document.getElementById('rede-status');
+            if (statusEl) {
+                if (isOnline) {
+                    statusEl.textContent = "[CONECTADO]";
+                    statusEl.className = "status-ok";
+                } else {
+                    statusEl.textContent = `[${mensagem || 'DESCONECTADO'}]`;
+                    statusEl.className = "status-error";
+                }
+            }
+        }
+
+        // --- 1. Lógica de Inicialização ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = checkLogin();
+            if (token) {
+                carregarMeuStatus(); // <-- Carrega status PRIMEIRO
+                
+                // --- AUTO-REFRESH ---
+                setInterval(carregarChat, 5000); 
+                setInterval(carregarRelogio, 10000); // <-- Heartbeat
+                setInterval(carregarAlertasEEventos, 10000); 
+                setInterval(carregarMeuStatus, 15000); // Atualiza Stats/Inventário
+                setInterval(carregarMeuHorario, 30000);
+                setInterval(carregarTarefas, 30000); 
+                setInterval(carregarCronogramas, 30000);
+                setInterval(carregarInformes, 30000);
+                setInterval(carregarRede, 30000);
+                setInterval(carregarArquivos, 5000); // Atualiza status BKP
+                setInterval(carregarLoja, 60000); 
+                
+                // --- Eventos ---
+                setupModalListeners();
+                document.getElementById('chat-form').addEventListener('submit', enviarMensagem);
+                document.getElementById('btn-backup').addEventListener('click', sincronizarBackup);
+                document.getElementById('loja-widget-content').addEventListener('click', comprarItem);
+                document.getElementById('lista-manuscritos').addEventListener('click', usarArquivo);
+                document.getElementById('form-esboco').addEventListener('submit', enviarEsboco);
+                document.getElementById('btn-debug-arquivo').addEventListener('click', simularEncontrarArquivo);
+            }
+        });
+
+        // --- 2. Lógica para trocar as Abas (App Principal) ---
+        const navButtons = document.querySelectorAll('.app-nav .nav-button');
+        const tabContents = document.querySelectorAll('.app-body .tab-content');
+        navButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault(); 
+                const targetTab = e.target.getAttribute('data-tab');
+                navButtons.forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                tabContents.forEach(content => content.classList.add('hidden'));
+                const activeContent = document.getElementById(targetTab + '-content');
+                if (activeContent) {
+                    activeContent.classList.remove('hidden');
+                }
+            });
+        });
+
+        // --- 3. FUNÇÕES DINÂMICAS (BUSCA DE DADOS) ---
+        
+        // (ATUALIZADO: fetchAPI agora controla o status da rede)
+        async function fetchAPI(url, method = 'GET', body = null) {
+            const token = checkLogin();
+            if (!token) return;
+            
+            try {
+                const options = {
+                    method: method,
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+                };
+                if (body) { options.body = JSON.stringify(body); }
+                
+                const response = await fetch(`http://127.0.0.1:5000${url}`, options);
+                
+                if (response.status === 401) {
+                    setRedeStatus(false, "NÃO AUTORIZADO");
+                    window.location.href = 'login.html';
+                }
+                
+                if (method === 'GET') {
+                    setRedeStatus(true);
+                }
+
+                if (method !== 'GET') {
+                    return response; 
+                }
+                
+                if (!response.ok) {
+                     throw new Error(`Falha na API: ${url}`);
+                }
+                
+                return await response.json();
+            
+            } catch (error) {
+                console.error("Erro de Rede:", error.message);
+                setRedeStatus(false);
+                throw error;
+            }
+        }
+        
+        async function carregarMeuStatus() { 
+            try {
+                // 'status' agora é o objeto JSON
+                const status = await fetchAPI('/api/aventureiro/status');
+                aventureiroNome = status.nome_aventureiro;
+                
+                // 1. Cabeçalho
+                document.getElementById('nome-aventureiro-header').textContent = status.nome_aventureiro;
+                // 2. Aba [PESSOAL] (Stats simples)
+                document.getElementById('stats-nivel').textContent = status.nivel;
+                document.getElementById('stats-xp').textContent = status.xp;
+                document.getElementById('stats-kc').textContent = status.kaicons;
+                // 3. Aba [INVENTÁRIO] (Stats detalhados e Itens)
+                document.getElementById('stats-nome-aventureiro').textContent = status.nome_aventureiro;
+                document.getElementById('stats-username').textContent = status.username;
+                document.getElementById('stats-classe').textContent = status.classe_origem || 'N/A';
+                const habilidadesEl = document.getElementById('stats-habilidades');
+                if (status.habilidades && status.habilidades.trim() !== '') {
+                    habilidadesEl.textContent = status.habilidades;
+                } else {
+                    habilidadesEl.textContent = '(Nenhuma habilidade registrada.)';
+                }
+                const inventarioWidget = document.getElementById('inventario-widget-content');
+                inventarioWidget.innerHTML = '';
+                try {
+                    const inventario = JSON.parse(status.inventario);
+                    const items = Object.keys(inventario);
+                    if (items.length === 0) {
+                        inventarioWidget.innerHTML = '<p class="rodizio-desc">Inventário vazio.</p>';
+                    } else {
+                        items.forEach(key => {
+                            inventarioWidget.innerHTML += `<div class="inventario-item"><span class="item-nome">>> ${key}</span><span class="item-quantia">(x${inventario[key]})</span></div>`;
+                        });
+                    }
+                } catch (e) {
+                    inventarioWidget.innerHTML = '<p class="alerta-glitch">Erro ao ler dados do inventário.</p>';
+                }
+                
+                // 4. Lógica de Restauração (BKP)
+                if (status.backup_arquivos && status.backup_arquivos !== '{}') {
+                    const localManuscritos = localStorage.getItem('kaibora_manuscritos');
+                    if (!localManuscritos) { // Só restaura se o local estiver vazio
+                        console.log("Detectado BKP no servidor. Restaurando arquivos locais...");
+                        const backupData = JSON.parse(status.backup_arquivos);
+                        if (backupData.manuscritos) { localStorage.setItem('kaibora_manuscritos', JSON.stringify(backupData.manuscritos)); }
+                        if (backupData.setores) { localStorage.setItem('kaibora_setores', JSON.stringify(backupData.setores)); }
+                        if (backupData.desbloqueios) { localStorage.setItem('kaibora_desbloqueios', JSON.stringify(backupData.desbloqueios)); }
+                    }
+                }
+                
+                // Carrega o resto DEPOIS
+                if (!window.kaiboraCarregado) {
+                    window.kaiboraCarregado = true;
+                    // Envia localização inicial
+                    await fetchAPI('/api/aventureiro/localizacao', 'POST', { localizacao: 'Setor 1 (Germinal)' });
+                    
+                    carregarTarefas();
+                    carregarAlertasEEventos();
+                    carregarCronogramas();
+                    carregarRelogio();
+                    carregarMeuHorario();
+                    carregarInformes();
+                    carregarRede();
+                    carregarChat();
+                    carregarArquivos();
+                    carregarLoja(); 
+                    carregarMapa();
+                }
+                
+            } catch (error) {
+                console.error("Erro ao carregar status:", error);
+            }
+        }
+        
+        async function carregarTarefas() { 
+            try {
+                const tarefas = await fetchAPI('/api/tarefas');
+                const taskWidget = document.getElementById('tarefas-widget-content');
+                taskWidget.innerHTML = ''; 
+                if (tarefas.length === 0) taskWidget.innerHTML = '<p>Nenhuma tarefa da Guilda no momento.</p>';
+                tarefas.forEach(tarefa => {
+                    taskWidget.innerHTML += `<div class="rodizio-item"><p class="rodizio-titulo">>> ${tarefa.texto}</p><p class="rodizio-desc">(+${tarefa.xp_reward} XP, +${tarefa.kc_reward} KÇ)</p></div>`;
+                });
+            } catch (error) { document.getElementById('tarefas-widget-content').innerHTML = `<p class="alerta-glitch">Erro ao carregar tarefas.</p>`; }
+        }
+        async function carregarAlertasEEventos() { 
+            try {
+                const eventosAgora = await fetchAPI('/api/status/eventos');
+                const alertasGM = await fetchAPI('/api/alertas');
+                const alertaWidget = document.getElementById('alertas-widget-content');
+                alertaWidget.innerHTML = ''; 
+                let hasContent = false;
+                eventosAgora.forEach(evento => { alertaWidget.innerHTML += `<p class="alerta-evento">>> [EVENTO ATUAL] ${evento}</p>`; hasContent = true; });
+                alertasGM.forEach(alerta => { alertaWidget.innerHTML += `<p class="alerta-glitch">>> [ALERTA] ${alerta}</p>`; hasContent = true; });
+                if (!hasContent) { alertaWidget.innerHTML = '<p>Nenhum alerta da Guilda no momento.</p>'; }
+            } catch (error) { document.getElementById('alertas-widget-content').innerHTML = `<p class="alerta-glitch">Erro de conexão com a Guilda.</p>`; }
+        }
+        async function carregarCronogramas() { 
+             try {
+                const cronogramas = await fetchAPI('/api/cronogramas');
+                const cronoWidget = document.getElementById('cronogramas-widget-content');
+                cronoWidget.innerHTML = ''; 
+                if (cronogramas.length === 0) cronoWidget.innerHTML = '<p>Nenhum evento agendado.</p>';
+                cronogramas.forEach(crono => {
+                    const horaFmt = String(crono.hora).padStart(2, '0');
+                    const minFmt = String(crono.minuto).padStart(2, '0');
+                    cronoWidget.innerHTML += `<p>> <strong>${horaFmt}:${minFmt}</strong> - ${crono.texto}</p>`;
+                });
+            } catch (error) { document.getElementById('cronogramas-widget-content').innerHTML = `<p class="alerta-glitch">Erro ao carregar cronogramas.</p>`; }
+        }
+        async function carregarRelogio() { 
+            try {
+                const tempo = await fetchAPI('/api/time');
+                const horaFmt = String(tempo.hora).padStart(2, '0');
+                const minFmt = String(tempo.minuto).padStart(2, '0');
+                document.getElementById('game-clock').textContent = `${tempo.data}, ${horaFmt}:${minFmt}`;
+            } catch (error) { 
+                document.getElementById('game-clock').textContent = `--/--, --:--`;
+            }
+        }
+        
+        // (CORRIGIDO: com a verificação de 'undefined')
+        async function carregarMeuHorario() { 
+            const widget = document.getElementById('rodizio-widget-content');
+            try {
+                const horario = await fetchAPI('/api/rodizio/meu-horario');
+                widget.innerHTML = ''; 
+                
+                if (horario && horario.hoje && horario.hoje.dia_semana) {
+                    widget.innerHTML += `<h4 class="rodizio-dia-semana">Hoje (${horario.hoje.dia_semana}):</h4>`;
+                    if (horario.hoje.tarefas.length === 0) {
+                        widget.innerHTML += '<p class="rodizio-desc">Você está livre hoje.</p>';
+                    } else {
+                        horario.hoje.tarefas.forEach(tarefa => {
+                            widget.innerHTML += `<div class="rodizio-item"><p class="rodizio-titulo">>> ${tarefa.nome_tarefa}</p><p class="rodizio-desc">(${tarefa.descricao})</p></div>`;
+                        });
+                    }
+                } else {
+                     widget.innerHTML += '<h4 class="rodizio-dia-semana">Hoje:</h4><p class="rodizio-desc">Calculando rodízio...</p>';
+                }
+                
+                if (horario && horario.amanha && horario.amanha.dia_semana) {
+                    widget.innerHTML += `<h4 class="rodizio-dia-semana">Amanhã (${horario.amanha.dia_semana}):</h4>`;
+                    if (horario.amanha.tarefas.length === 0) {
+                        widget.innerHTML += '<p class="rodizio-desc">Você estará livre amanhã.</p>';
+                    } else {
+                        horario.amanha.tarefas.forEach(tarefa => {
+                            widget.innerHTML += `<div class="rodizio-item"><p class="rodizio-titulo">>> ${tarefa.nome_tarefa}</p><p class="rodizio-desc">(${tarefa.descricao})</p></div>`;
+                        });
+                    }
+                } else {
+                    widget.innerHTML += '<h4 class="rodizio-dia-semana">Amanhã:</h4><p class="rodizio-desc">Calculando rodízio...</p>';
+                }
+                
+            } catch (error) {
+                console.error("Erro ao carregar horário:", error);
+                widget.innerHTML = '<p class="alerta-glitch">Erro de conexão com o sistema de rodízio.</p>';
+            }
+        }
+        
+        async function carregarInformes() {
+            const widgetAgenda = document.getElementById('informes-widget-content');
+            try {
+                const informes = await fetchAPI('/api/informes');
+                widgetAgenda.innerHTML = '';
+                if (informes.length === 0) {
+                    widgetAgenda.innerHTML = '<p class="log-entry">Nenhum informe no registro.</p>';
+                } else {
+                    let html = '';
+                    informes.forEach(informe => {
+                        html += `<p class="log-entry"><span class="log-time">[${informe.timestamp}]</span> ${informe.texto}</p>`;
+                    });
+                    widgetAgenda.innerHTML = html;
+                }
+            } catch (error) { console.error("Erro ao carregar informes:", error); }
+        }
+        async function carregarRede() {
+            const widget = document.getElementById('rede-jogadores-widget');
+            try {
+                const jogadores = await fetchAPI('/api/aventureiros/lista');
+                widget.innerHTML = ''; 
+                if (jogadores.length === 0) {
+                    widget.innerHTML = '<p class="rede-status-offline">Nenhum outro aventureiro detectado na rede.</p>';
+                } else {
+                    jogadores.forEach(nome => {
+                        widget.innerHTML += `<div class="rede-jogador-item"><span class="rede-status-online">> ${nome} (Online)</span><a href="#" class="filtro-btn btn-p2p" data-nome="${nome}">[chat p2p]</a></div>`;
+                    });
+                }
+            } catch (error) { console.error("Erro ao carregar lista de jogadores:", error); }
+        }
+        async function carregarChat() {
+            const widget = document.getElementById('chat-guilda-window');
+            try {
+                const mensagens = await fetchAPI('/api/chat');
+                const isScrolledToBottom = widget.scrollHeight - widget.clientHeight <= widget.scrollTop + 1;
+                widget.innerHTML = ''; 
+                if (mensagens.length === 0) {
+                    widget.innerHTML = '<p class="log-entry">Nenhuma mensagem no chat.</p>';
+                } else {
+                    mensagens.forEach(msg => {
+                        const classeAutor = (msg.nome_autor === aventureiroNome) ? "chat-user-self" : "chat-user";
+                        widget.innerHTML += `<p class="chat-msg"><span class="${classeAutor}">[${msg.timestamp}] ${msg.nome_autor}:</span> ${msg.texto}</p>`;
+                    });
+                }
+                if(isScrolledToBottom) {
+                    widget.scrollTop = widget.scrollHeight;
+                }
+            } catch (error) { console.error("Erro ao carregar chat:", error); }
+        }
+        
+        async function enviarMensagem(e) {
+            e.preventDefault();
+            const input = document.getElementById('chat-input');
+            const texto = input.value;
+            if (!texto.trim()) return; 
+            try {
+                const response = await fetchAPI('/api/chat', 'POST', { texto: texto });
+                if (!response.ok) { throw new Error('Falha ao enviar mensagem'); }
+                input.value = ''; 
+                await carregarChat(); 
+                document.getElementById('chat-guilda-window').scrollTop = 99999;
+            } catch (error) { console.error("Erro ao enviar mensagem:", error); }
+        }
+        
+        // --- 4. FUNÇÕES DE MODAL, ARQUIVOS e LOJA ---
+        
+        function setupModalListeners() {
+            // (Modal P2P)
+            document.getElementById('rede-jogadores-widget').addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-p2p')) {
+                    e.preventDefault();
+                    const nome = e.target.dataset.nome;
+                    abrirModalP2P(nome);
+                }
+            });
+            document.querySelectorAll('.modal-tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = e.target.dataset.tab + '-content';
+                    document.querySelectorAll('.modal-tab-content').forEach(c => c.classList.add('hidden'));
+                    document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+                    document.getElementById(targetId).classList.remove('hidden');
+                    e.target.classList.add('active');
+                });
+            });
+            document.getElementById('btn-transferir').addEventListener('click', transferirKaicons);
+        }
+        function abrirModalP2P(nome) { /* ... (sem alterações) ... */ }
+        function fecharModalP2P() { /* ... (sem alterações) ... */ }
+        
+        async function transferirKaicons() { 
+            const quantia = document.getElementById('troca-quantia').value;
+            const errorDiv = document.getElementById('troca-error');
+            if (!destinatarioAtual || !quantia || quantia <= 0) {
+                errorDiv.textContent = 'Quantia inválida.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            try {
+                const response = await fetchAPI('/api/transferir', 'POST', {
+                    destinatario: destinatarioAtual,
+                    quantia: quantia
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.erro || 'Erro desconhecido');
+                }
+                alert('Transferência concluída!');
+                fecharModalP2P();
+                carregarMeuStatus(); 
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+        
+        // (Funções de Arquivos Locais)
+        function carregarArquivos() {
+            const listaManuscritos = document.getElementById('lista-manuscritos');
+            const listaSetores = document.getElementById('lista-setores');
+            if (!listaManuscritos) return;
+            
+            const manuscritos = JSON.parse(localStorage.getItem('kaibora_manuscritos')) || [];
+            const setores = JSON.parse(localStorage.getItem('kaibora_setores')) || [];
+            const desbloqueios = JSON.parse(localStorage.getItem('kaibora_desbloqueios')) || [];
+            
+            listaManuscritos.innerHTML = '';
+            listaSetores.innerHTML = '';
+            
+            if (manuscritos.length === 0) {
+                listaManuscritos.innerHTML = '<p class="file-entry file-locked">Nenhum manuscrito encontrado.</p>';
+            } else {
+                manuscritos.forEach(arq => {
+                    const filtro = arq.id.includes('HIDRO') ? 'hidro' : null;
+                    let botao = '';
+                    if (filtro && desbloqueios.includes(filtro)) {
+                        botao = '<span class="file-status-loaded">[CARREGADO]</span>';
+                    } else if (filtro) {
+                        botao = `<button class="btn-usar" data-arquivo-id="${arq.id}" data-desbloqueia="${filtro}">[USAR]</button>`;
+                    }
+                    listaManuscritos.innerHTML += `<div class="file-item"><span class="file-entry file-found">>> ${arq.nome}</span>${botao}</div>`;
+                });
+            }
+            
+            if (setores.length === 0) {
+                listaSetores.innerHTML = '<p class="file-entry file-locked">Nenhum dado de setor escaneado.</p>';
+            } else {
+                setores.forEach(arq => {
+                    listaSetores.innerHTML += `<p class="file-entry file-found">>> ${arq.nome}</p>`;
+                });
+            }
+            
+            document.getElementById('memoria-local-usada').textContent = `${(manuscritos.length + setores.length) * 2}%`;
+            
+            if (window.backupRealizado) {
+                 document.getElementById('bkp-status').textContent = "[SINCRONIZADO]";
+                 document.getElementById('bkp-status').className = "alerta-ok";
+            } else {
+                 document.getElementById('bkp-status').textContent = "[PENDENTE]";
+                 document.getElementById('bkp-status').className = "alerta-glitch";
+            }
+        }
+        async function sincronizarBackup() {
+            const statusEl = document.getElementById('bkp-status');
+            statusEl.textContent = "[SINCRONIZANDO...]";
+            statusEl.className = "alerta-glitch";
+            
+            const manuscritos = JSON.parse(localStorage.getItem('kaibora_manuscritos')) || [];
+            const setores = JSON.parse(localStorage.getItem('kaibora_setores')) || [];
+            const desbloqueios = JSON.parse(localStorage.getItem('kaibora_desbloqueios')) || [];
+            
+            const backupData = {
+                manuscritos: manuscritos,
+                setores: setores,
+                desbloqueios: desbloqueios
+            };
+            
+            try {
+                const response = await fetchAPI('/api/aventureiro/backup', 'POST', {
+                    backup_data: JSON.stringify(backupData) 
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.erro || 'Falha na sincronização');
+                }
+                statusEl.textContent = "[BKP CONCLUÍDO]";
+                statusEl.className = "alerta-ok";
+                window.backupRealizado = true;
+            } catch (error) {
+                console.error("Erro no backup:", error);
+                statusEl.textContent = "[FALHA NO BKP]";
+                statusEl.className = "alerta-glitch";
+            }
+        }
+        
+        function simularEncontrarArquivo() {
+            let manuscritos = JSON.parse(localStorage.getItem('kaibora_manuscritos')) || [];
+            const existe = manuscritos.some(m => m.id === 'MAPA_HIDRO_S4');
+            if (existe) {
+                alert('DEBUG: Você já encontrou este arquivo.');
+            } else {
+                manuscritos.push({
+                    id: 'MAPA_HIDRO_S4',
+                    nome: "Manuscrito: Mapa Hidráulico (Setor 4)"
+                });
+                localStorage.setItem('kaibora_manuscritos', JSON.stringify(manuscritos));
+                alert('DEBUG: Arquivo "Mapa Hidráulico" adicionado!');
+                carregarArquivos();
+                window.backupRealizado = false;
+                document.getElementById('bkp-status').textContent = "[PENDENTE]";
+                document.getElementById('bkp-status').className = "alerta-glitch";
+            }
+        }
+        
+        function carregarMapa() {
+            // 1. Carrega filtros
+            const desbloqueios = JSON.parse(localStorage.getItem('kaibora_desbloqueios')) || [];
+            desbloqueios.forEach(filtroId => {
+                const filtroBtn = document.getElementById(`filtro-${filtroId}`);
+                if (filtroBtn) {
+                    filtroBtn.classList.remove('filtro-off');
+                }
+            });
+            
+            // 2. Carrega o mapa 3D (apenas se ainda não foi carregado)
+            const iframe = document.getElementById('mapa-3d-frame');
+            if (iframe && iframe.src === 'about:blank') {
+                iframe.src = 'mapa_3d.xhtml';
+            }
+        }
+        
+        function usarArquivo(e) {
+            if (!e.target.classList.contains('btn-usar')) return;
+            e.preventDefault();
+            
+            const btn = e.target;
+            const filtro = btn.dataset.desbloqueia; // (ex: "hidro")
+            
+            if (confirm(`Deseja carregar os dados deste manuscrito no sistema Kaipora? (Ação permanente)`)) {
+                let desbloqueios = JSON.parse(localStorage.getItem('kaibora_desbloqueios')) || [];
+                if (!desbloqueios.includes(filtro)) {
+                    desbloqueios.push(filtro);
+                    localStorage.setItem('kaibora_desbloqueios', JSON.stringify(desbloqueios));
+                }
+                carregarArquivos();
+                carregarMapa();
+                window.backupRealizado = false;
+                document.getElementById('bkp-status').textContent = "[PENDENTE]";
+                document.getElementById('bkp-status').className = "alerta-glitch";
+                alert(`Sucesso! Filtro [${filtro.toUpperCase()}] desbloqueado no seu Módulo de Mapa.`);
+            }
+        }
+        
+        // (Funções da Loja)
+        async function carregarLoja() {
+            const widget = document.getElementById('loja-widget-content');
+            try {
+                const itens = await fetchAPI('/api/loja-itens');
+                widget.innerHTML = '';
+                if (itens.length === 0) {
+                    widget.innerHTML = '<p class="rodizio-desc">A loja da Guilda está sem estoque no momento.</p>';
+                    return;
+                }
+                itens.forEach(item => {
+                    let botaoComprar = '';
+                    if (item.estoque > 0) {
+                        botaoComprar = `<button class="filtro-btn btn-comprar" data-id="${item.id}" data-nome="${item.nome}" data-preco="${item.preco}">[COMPRAR: ${item.preco} KÇ]</button>`;
+                    } else {
+                        botaoComprar = `<button class="filtro-btn" disabled>[FORA DE ESTOQUE]</button>`;
+                    }
+                    widget.innerHTML += `
+                        <div class="loja-item">
+                            <div class="loja-item-info">
+                                <span class="loja-item-nome">>> ${item.nome} (Estoque: ${item.estoque})</span>
+                                <span class="loja-item-desc">${item.descricao}</span>
+                            </div>
+                            ${botaoComprar}
+                        </div>
+                    `;
+                });
+            } catch (error) { console.error("Erro ao carregar loja:", error); }
+        }
+        async function comprarItem(e) {
+            if (!e.target.classList.contains('btn-comprar')) return;
+            e.preventDefault();
+            const btn = e.target;
+            const itemId = btn.dataset.id;
+            const itemName = btn.dataset.nome;
+            const itemPreco = btn.dataset.preco;
+            if (!confirm(`Deseja comprar 1x ${itemName} por ${itemPreco} KÇ?`)) return;
+            btn.textContent = "[PROCESSANDO...]";
+            btn.disabled = true;
+            try {
+                const response = await fetchAPI(`/api/loja/comprar/${itemId}`, 'POST');
+                const data = await response.json(); 
+                if (!response.ok) {
+                    throw new Error(data.erro || 'Erro desconhecido');
+                }
+                alert(`Você comprou 1x ${itemName}!`);
+                atualizarStatusEInventario(data); // Otimização
+                carregarLoja(); // Recarrega a loja para atualizar o estoque
+            } catch (error) {
+                console.error("Erro ao comprar item:", error);
+                alert(`Falha na compra: ${error.message}`);
+            } finally {
+                btn.textContent = `[COMPRAR: ${itemPreco} KÇ]`;
+                btn.disabled = false;
+            }
+        }
+        function atualizarStatusEInventario(status) {
+             // 1. Atualiza aba [PESSOAL]
+            document.getElementById('stats-nivel').textContent = status.nivel;
+            document.getElementById('stats-xp').textContent = status.xp;
+            document.getElementById('stats-kc').textContent = status.kaicons;
+            // 2. ATUALIZA A ABA [INVENTÁRIO]
+            const inventarioWidget = document.getElementById('inventario-widget-content');
+            inventarioWidget.innerHTML = '';
+            try {
+                const inventario = JSON.parse(status.inventario);
+                const items = Object.keys(inventario);
+                if (items.length === 0) {
+                    inventarioWidget.innerHTML = '<p class="rodizio-desc">Inventário vazio.</p>';
+                } else {
+                    items.forEach(key => {
+                        inventarioWidget.innerHTML += `<div class="inventario-item"><span class="item-nome">>> ${key}</span><span class="item-quantia">(x${inventario[key]})</span></div>`;
+                    });
+                }
+            } catch (e) {
+                inventarioWidget.innerHTML = '<p class="alerta-glitch">Erro ao ler dados do inventário.</p>';
+            }
+        }
+        
+        // (Funções de Mapeamento 2D)
+        async function enviarEsboco(e) {
+            e.preventDefault();
+            const setorInput = document.getElementById('esboco-setor');
+            const notasInput = document.getElementById('esboco-notas');
+            const btn = e.target.querySelector('button');
+            const nomeSetor = setorInput.value;
+            const notas = notasInput.value;
+            if (!nomeSetor) {
+                alert("O nome do setor é obrigatório.");
+                return;
+            }
+            btn.textContent = "[ENVIANDO DADOS PARA KAI BORA...]";
+            btn.disabled = true;
+            try {
+                const response = await fetchAPI('/api/mapa/esboco', 'POST', {
+                    nome_setor: nomeSetor,
+                    notas: notas
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.erro || 'Falha ao enviar esboço');
+                }
+                alert("Esboço 2D enviado para a IA. O Mestre (GM) foi notificado e irá revisar sua atualização.");
+                setorInput.value = '';
+                notasInput.value = '';
+            } catch (error) {
+                console.error("Erro ao enviar esboço:", error);
+                alert(`Falha no envio: ${error.message}`);
+            } finally {
+                btn.textContent = "[ENVIAR ESBOÇO PARA KAI BORA]";
+                btn.disabled = false;
+            }
+        }
+        
+        // (Esta função foi removida na Etapa 46 quando introduzimos o <iframe>)
+        // function selecionarSetorGrid(e) { /* ... */ }
+
+        // --- === CÓDIGO PWA ADICIONADO === ---
+        // 4. Regista o Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((reg) => {
+                        console.log('Service Worker Registado com sucesso:', reg.scope);
+                    })
+                    .catch((err) => {
+                        console.error('Falha ao registar Service Worker:', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

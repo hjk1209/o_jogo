@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GM - Hub de Gerenciamento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='gm.css') }}">
+</head>
+<body>
+    <header class="gm-header">
+        <h1>TERMINAL MESTRE DA GUILDA</h1>
+        <p>Acesso: Game Master (Nível 99) | Tempo do Jogo: [SINCRONIZADO COM RELÓGIO REAL]</p>
+    </header>
+    
+    <nav class="gm-nav">
+        <a href="/gm">Painel de Controle (Eventos)</a>
+        <a href="/gm-hub" class="active">Hub de Gerenciamento (Jogadores)</a>
+        <a href="/gm-loja">Hub da Loja (Economia)</a> </nav>
+        <a href="/gm-mapa">Mapa de Rastreamento (Pessoas)</a> </nav>
+    </nav>
+    
+    <div class="gm-container">
+        <div class="gm-coluna">
+            <div class="gm-widget">
+                <h3>Relatório de Aventureiros (Banco Central)</h3>
+                <div class="widget-content">
+                    <ul id="lista-jogadores"><li>Carregando...</li></ul>
+                </div>
+            </div>
+            
+            <div class="gm-widget">
+                <h3>GERENCIADOR DA LOJA</h3>
+                <form id="form-loja" class="form-multi-input">
+                    <input type="text" id="loja-item-nome" placeholder="Nome do Item (ex: Kit Médico)" required>
+                    <input type="text" id="loja-item-desc" placeholder="Descrição (ex: Cura 10 HP)" required>
+                    <input type="number" id="loja-item-preco" placeholder="Preço em KÇ (ex: 50)" min="1" required>
+                    <button type="submit">[ADICIONAR ITEM À LOJA]</button>
+                </form>
+                <div class="widget-content">
+                    <h4>Itens Atualmente à Venda:</h4>
+                    <ul id="lista-loja">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="gm-coluna">
+            <div class="gm-widget">
+                <h3>GERENCIADOR DE RODÍZIO (Tarefas Comunitárias)</h3>
+                
+                <form id="form-rodizio" class="form-multi-input">
+                    <input type="text" id="rodizio-nome" placeholder="Nome da Tarefa (ex: Cuidar da Horta)" required>
+                    <input type="text" id="rodizio-desc" placeholder="Descrição (ex: regar, tirar ervas...)" required>
+                    <button type="submit">[ADICIONAR TAREFA COMUNITÁRIA]</button>
+                </form>
+                
+                <div class="widget-content">
+                    <p class="rodizio-info">Atribuição de hoje (calculada automaticamente):</p>
+                    <ul id="lista-rodizio-hoje">
+                        <li>Carregando...</li>
+                    </ul>
+                    <hr class="rodizio-hr">
+                    <p class="rodizio-info">Tipos de Tarefas (para deletar):</p>
+                    <ul id="lista-tipos-rodizio">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- FUNÇÕES HELPER ---
+        function formatarInventario(inventarioString) {
+            try {
+                const inventario = JSON.parse(inventarioString);
+                const items = Object.keys(inventario);
+                if (items.length === 0) {
+                    return 'Vazio';
+                }
+                return items.map(key => `${key} (x${inventario[key]})`).join(', ');
+            } catch (e) {
+                return 'Erro no JSON';
+            }
+        }
+    
+        // --- FUNÇÕES DE CARREGAMENTO (READ) ---
+        
+        async function carregarJogadores() {
+            try {
+                const response = await fetch('/api/jogadores');
+                const jogadores = await response.json(); 
+                const listaUI = document.getElementById('lista-jogadores');
+                listaUI.innerHTML = ''; 
+                if (jogadores.length === 0) listaUI.innerHTML = '<li>Nenhum aventureiro registrado.</li>';
+                
+                jogadores.forEach(j => {
+                    const inventarioFormatado = formatarInventario(j.inventario);
+                    listaUI.innerHTML += `
+                        <li class="jogador-hub-item">
+                            <div class="jogador-info-header">
+                                <strong>${j.nome_aventureiro}</strong> (Lvl: ${j.nivel})
+                                <button class="btn-player-delete btn-task-delete" data-nome="${j.nome_aventureiro}">[X]</button>
+                            </div>
+                            <div class="stats-grid">
+                                <span>Login: ${j.username}</span>
+                                <span>Jogador: ${j.nome_jogador || 'N/A'}</span>
+                                <span>XP: ${j.xp}</span>
+                                <span>KÇ: ${j.kaicons}</span>
+                            </div>
+                            <div class="stats-inventario">
+                                <strong>Inventário:</strong> ${inventarioFormatado}
+                            </div>
+                            <form class="form-adjust-stats" data-nome="${j.nome_aventureiro}">
+                                <input type="number" class="stat-adjust-input" data-stat="kaicons" placeholder="+/- KÇ">
+                                <input type="number" class="stat-adjust-input" data-stat="xp" placeholder="+/- XP">
+                                <input type="number" class="stat-adjust-input" data-stat="nivel" placeholder="Definir Nível">
+                                <input type="text" class="stat-adjust-input" data-stat="habilidades" placeholder="Definir Habilidades...">
+                                <button type="submit" class="btn-adjust">[AJUSTAR STATS]</button>
+                            </form>
+                            <form class="form-adjust-inventario" data-nome="${j.nome_aventureiro}">
+                                <input type="text" class="item-nome-input" placeholder="Nome do Item (ex: racao)">
+                                <input type="number" class="item-quantia-input" placeholder="+/- Qnt (ex: 5 ou -1)">
+                                <button type="submit" class="btn-adjust">[Ajustar Item]</button>
+                            </form>
+                        </li>`;
+                });
+            } catch (err) { console.error('Erro ao carregar jogadores:', err); }
+        }
+        
+        async function carregarRodizio() { 
+             try {
+                const response = await fetch('/api/rodizio');
+                const data = await response.json(); 
+                const listaHoje = document.getElementById('lista-rodizio-hoje');
+                listaHoje.innerHTML = ''; 
+                data.atribuicoes_hoje.forEach(tarefa => {
+                    listaHoje.innerHTML += `
+                        <li class="rodizio-item-gm">
+                            <strong>${tarefa.nome_tarefa}</strong> -> ${tarefa.atribuido_a}
+                        </li>`;
+                });
+                const listaTipos = document.getElementById('lista-tipos-rodizio');
+                listaTipos.innerHTML = '';
+                data.tipos_de_tarefa.forEach(tarefa => {
+                     listaTipos.innerHTML += `
+                        <li class="item-cronograma">
+                            <span>${tarefa.nome_tarefa}</span>
+                            <div class="task-buttons">
+                                <button class="btn-rodizio-delete btn-task-delete" data-id="${tarefa.id}">[X]</button>
+                            </div>
+                        </li>`;
+                });
+            } catch (err) { console.error('Erro ao carregar rodízio:', err); }
+        }
+        
+        // --- NOVA FUNÇÃO: Carregar Itens da Loja ---
+        async function carregarLoja() {
+            try {
+                const response = await fetch('/api/loja-itens');
+                const itens = await response.json();
+                const lista = document.getElementById('lista-loja');
+                lista.innerHTML = ''; 
+                
+                if (itens.length === 0) {
+                    lista.innerHTML = '<li>Nenhum item à venda.</li>';
+                }
+                
+                itens.forEach(item => {
+                    lista.innerHTML += `
+                        <li class="loja-item">
+                            <div class="loja-item-info">
+                                <strong>${item.nome}</strong> (${item.preco} KÇ)
+                                <em>${item.descricao}</em>
+                            </div>
+                            <button class="btn-loja-delete btn-task-delete" data-id="${item.id}">[X]</button>
+                        </li>`;
+                });
+            } catch (err) { console.error('Erro ao carregar loja:', err); }
+        }
+
+        // --- FUNÇÕES DE ENVIO (CREATE) ---
+        
+        document.getElementById('form-rodizio').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('rodizio-nome').value;
+            const desc = document.getElementById('rodizio-desc').value;
+            if (!nome || !desc) return;
+            await fetch('/api/rodizio', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nome_tarefa: nome, descricao: desc })
+            });
+            document.getElementById('rodizio-nome').value = '';
+            document.getElementById('rodizio-desc').value = '';
+            carregarRodizio(); 
+        });
+        
+        // --- NOVO EVENTO: Adicionar Item à Loja ---
+        document.getElementById('form-loja').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('loja-item-nome').value;
+            const desc = document.getElementById('loja-item-desc').value;
+            const preco = document.getElementById('loja-item-preco').value;
+            
+            if (!nome || !desc || !preco) return;
+            
+            const response = await fetch('/api/loja-item', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nome: nome, descricao: desc, preco: preco })
+            });
+            
+            if (!response.ok) {
+                const err = await response.json();
+                alert(`Erro: ${err.erro}`);
+            } else {
+                document.getElementById('loja-item-nome').value = '';
+                document.getElementById('loja-item-desc').value = '';
+                document.getElementById('loja-item-preco').value = '';
+                carregarLoja(); // Atualiza a lista da loja
+            }
+        });
+
+        // --- FUNÇÕES DE GERENCIAMENTO (DELETE / UPDATE) ---
+        
+        document.getElementById('lista-tipos-rodizio').addEventListener('click', async (e) => { 
+            const id = e.target.dataset.id; 
+            if (!id) return; 
+            if (e.target.classList.contains('btn-rodizio-delete')) { 
+                if (confirm('DELETAR este tipo de tarefa de rodízio permanentemente?')) { 
+                    await fetch(`/api/rodizio/${id}`, { method: 'DELETE' }); 
+                    carregarRodizio(); 
+                } 
+            } 
+        });
+        
+        document.getElementById('lista-jogadores').addEventListener('click', async (e) => { 
+            // Deletar Jogador
+            if (e.target.classList.contains('btn-player-delete')) {
+                const nome = e.target.dataset.nome; 
+                if (!nome) return;
+                if (confirm(`REMOVER o jogador "${nome}"?`)) { 
+                    await fetch(`/api/jogadores/${encodeURIComponent(nome)}`, { method: 'DELETE' }); 
+                    await carregarJogadores();
+                    carregarRodizio();
+                } 
+            }
+        });
+        
+        document.getElementById('lista-jogadores').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = e.target.dataset.nome;
+            
+             // Ajustar Stats (Banco Central)
+            if (e.target.classList.contains('form-adjust-stats')) {
+                let data = { nome_aventureiro: nome };
+                let hasUpdate = false;
+                const inputs = e.target.querySelectorAll('.stat-adjust-input');
+                inputs.forEach(input => {
+                    if (input.value) {
+                        data[input.dataset.stat] = input.value;
+                        hasUpdate = true;
+                    }
+                });
+                if (!hasUpdate) { alert('Nenhum valor de ajuste inserido.'); return; }
+                
+                if (confirm(`Atualizar stats para ${nome}?`)) {
+                    const response = await fetch('/api/aventureiro/ajustar-stats', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data)
+                    });
+                    if (!response.ok) {
+                        const err = await response.json();
+                        alert(`Erro: ${err.erro}`);
+                    } else {
+                        inputs.forEach(input => input.value = '');
+                        carregarJogadores();
+                    }
+                }
+            }
+            
+            // Ajustar Inventário
+            if (e.target.classList.contains('form-adjust-inventario')) {
+                const itemNome = e.target.querySelector('.item-nome-input').value;
+                const itemQuantia = e.target.querySelector('.item-quantia-input').value;
+                if (!itemNome || !itemQuantia || itemQuantia == 0) {
+                    alert('Nome do item e quantia (não-zero) são obrigatórios.');
+                    return;
+                }
+                const acao = itemQuantia > 0 ? "ADICIONAR" : "REMOVER";
+                if (confirm(`Tem certeza que deseja ${acao} ${Math.abs(itemQuantia)}x '${itemNome}' para ${nome}?`)) {
+                    const response = await fetch('/api/aventureiro/ajustar-inventario', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ 
+                            nome_aventureiro: nome, 
+                            item_nome: itemNome,
+                            quantia: itemQuantia
+                        })
+                    });
+                    if (!response.ok) {
+                        const err = await response.json();
+                        alert(`Erro: ${err.erro}`);
+                    } else {
+                        e.target.querySelector('.item-nome-input').value = '';
+                        e.target.querySelector('.item-quantia-input').value = '';
+                        carregarJogadores(); 
+                    }
+                }
+            }
+        });
+        
+        // --- NOVO EVENTO: Deletar Item da Loja ---
+        document.getElementById('lista-loja').addEventListener('click', async (e) => {
+            if (e.target.classList.contains('btn-loja-delete')) {
+                const id = e.target.dataset.id;
+                if (!id) return;
+                
+                if (confirm('REMOVER este item da loja permanentemente?')) {
+                    await fetch(`/api/loja-item/${id}`, { method: 'DELETE' });
+                    carregarLoja(); // Recarrega a lista da loja
+                }
+            }
+        });
+
+        // --- INICIALIZAÇÃO (Carrega tudo em ordem) ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await carregarJogadores(); 
+            await carregarRodizio();
+            await carregarLoja(); // <-- NOVO
+        });
+    </script>
+</body>
+</html>

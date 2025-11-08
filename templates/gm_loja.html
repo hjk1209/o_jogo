@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GM - Hub da Loja</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='gm.css') }}">
+</head>
+<body>
+    <header class="gm-header">
+        <h1>TERMINAL MESTRE DA GUILDA</h1>
+        <p>Acesso: Game Master (Nível 99) | Tempo do Jogo: [SINCRONIZADO COM RELÓGIO REAL]</p>
+    </header>
+    
+    <nav class="gm-nav">
+        <a href="/gm">Painel de Controle (Eventos)</a>
+        <a href="/gm-hub">Hub de Gerenciamento (Jogadores)</a>
+        <a href="/gm-loja" class="active">Hub da Loja (Economia)</a>
+        <a href="/gm-mapa">Mapa de Rastreamento (Pessoas)</a> </nav>
+    </nav>
+    
+    <div class="gm-container">
+        <div class="gm-coluna">
+            <div class="gm-widget">
+                <h3>CRIAR NOVO TIPO DE ITEM</h3>
+                <form id="form-loja-criar" class="form-multi-input">
+                    <input type="text" id="loja-item-nome" placeholder="Nome do Item (ex: Kit Médico)" required>
+                    <input type="text" id="loja-item-desc" placeholder="Descrição (ex: Cura 10 HP)" required>
+                    <div class="form-row">
+                        <input type="number" id="loja-item-preco" placeholder="Preço em KÇ (ex: 50)" min="1" required>
+                        <input type="number" id="loja-item-estoque" placeholder="Estoque Inicial (ex: 20)" min="0" required>
+                    </div>
+                    <button type="submit">[CRIAR ITEM NA LOJA]</button>
+                </form>
+            </div>
+            
+            <div class="gm-widget">
+                <h3>GERENCIADOR DE ESTOQUE E PREÇOS</h3>
+                <div class="widget-content">
+                    <ul id="lista-loja">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="gm-coluna">
+            <div class="gm-widget">
+                <h3>LOG DE TRANSAÇÕES DA LOJA</h3>
+                <div class="widget-content log-window">
+                    <ul id="lista-log-loja">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- FUNÇÕES DE CARREGAMENTO (READ) ---
+        
+        async function carregarLoja() {
+            try {
+                const response = await fetch('/api/loja-itens');
+                const itens = await response.json();
+                const lista = document.getElementById('lista-loja');
+                lista.innerHTML = ''; 
+                
+                if (itens.length === 0) {
+                    lista.innerHTML = '<li>Nenhum item à venda.</li>';
+                }
+                
+                itens.forEach(item => {
+                    lista.innerHTML += `
+                        <li class="loja-gerenciar-item">
+                            <div class="loja-gerenciar-info">
+                                <strong>${item.nome}</strong> (Estoque: ${item.estoque})
+                                <em>${item.descricao}</em>
+                            </div>
+                            <form class="form-adjust-loja" data-id="${item.id}">
+                                <input type="number" class="loja-ajuste-preco" value="${item.preco}" min="0">
+                                <button type="submit" class="btn-adjust">[Definir Preço]</button>
+                            </form>
+                            <form class="form-adjust-loja" data-id="${item.id}">
+                                <input type="number" class="loja-ajuste-estoque" placeholder="+/- Estoque (ex: 10 ou -5)">
+                                <button type="submit" class="btn-adjust">[Ajustar Estoque]</button>
+                            </form>
+                            <button class="btn-loja-delete btn-task-delete" data-id="${item.id}">[X]</button>
+                        </li>`;
+                });
+            } catch (err) { console.error('Erro ao carregar loja:', err); }
+        }
+        
+        async function carregarLogLoja() {
+            try {
+                const response = await fetch('/api/informes/loja');
+                const informes = await response.json();
+                const lista = document.getElementById('lista-log-loja');
+                lista.innerHTML = ''; 
+                
+                if (informes.length === 0) {
+                    lista.innerHTML = '<li>Nenhuma transação registrada.</li>';
+                }
+                
+                informes.forEach(informe => {
+                    lista.innerHTML += `<li class="log-entry"><span class="log-time">[${informe.timestamp}]</span> ${informe.texto}</li>`;
+                });
+            } catch (err) { console.error('Erro ao carregar log da loja:', err); }
+        }
+
+        // --- FUNÇÕES DE ENVIO (CREATE) ---
+        
+        document.getElementById('form-loja-criar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('loja-item-nome').value;
+            const desc = document.getElementById('loja-item-desc').value;
+            const preco = document.getElementById('loja-item-preco').value;
+            const estoque = document.getElementById('loja-item-estoque').value;
+            
+            if (!nome || !desc || !preco || !estoque) {
+                alert("Todos os campos são obrigatórios.");
+                return;
+            }
+            
+            const response = await fetch('/api/loja-item', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 
+                    nome: nome, 
+                    descricao: desc, 
+                    preco: preco, 
+                    estoque_inicial: estoque 
+                })
+            });
+            
+            if (!response.ok) {
+                const err = await response.json();
+                alert(`Erro: ${err.erro}`);
+            } else {
+                document.getElementById('loja-item-nome').value = '';
+                document.getElementById('loja-item-desc').value = '';
+                document.getElementById('loja-item-preco').value = '';
+                document.getElementById('loja-item-estoque').value = '';
+                carregarLoja(); // Atualiza a lista da loja
+                carregarLogLoja(); // Atualiza o log
+            }
+        });
+
+        // --- FUNÇÕES DE GERENCIAMENTO (DELETE / UPDATE) ---
+
+        // (Event Delegation para a lista da loja)
+        document.getElementById('lista-loja').addEventListener('click', async (e) => {
+            // Deletar Item
+            if (e.target.classList.contains('btn-loja-delete')) {
+                const id = e.target.dataset.id;
+                if (!id) return;
+                if (confirm('REMOVER este item da loja permanentemente?')) {
+                    await fetch(`/api/loja-item/${id}`, { method: 'DELETE' });
+                    carregarLoja();
+                    carregarLogLoja();
+                }
+            }
+        });
+        
+        document.getElementById('lista-loja').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (e.target.classList.contains('form-adjust-loja')) {
+                const id = e.target.dataset.id;
+                const novoPreco = e.target.querySelector('.loja-ajuste-preco');
+                const addEstoque = e.target.querySelector('.loja-ajuste-estoque');
+                
+                let data = { item_id: id };
+                
+                if (novoPreco && novoPreco.value) {
+                    data.novo_preco = novoPreco.value;
+                }
+                if (addEstoque && addEstoque.value) {
+                    data.adicionar_estoque = addEstoque.value;
+                }
+                
+                if (!data.novo_preco && !data.adicionar_estoque) {
+                    alert("Nenhum valor inserido para ajustar.");
+                    return;
+                }
+                
+                const response = await fetch('/api/loja/ajustar', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json();
+                    alert(`Erro: ${err.erro}`);
+                } else {
+                    // Limpa os inputs e recarrega tudo
+                    if (addEstoque) addEstoque.value = '';
+                    carregarLoja();
+                    carregarLogLoja();
+                }
+            }
+        });
+
+        // --- INICIALIZAÇÃO (Carrega tudo em ordem) ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await carregarLoja();
+            await carregarLogLoja();
+        });
+    </script>
+</body>
+</html>

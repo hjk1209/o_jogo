@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GM - Mapa de Rastreamento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='gm.css') }}">
+</head>
+<body>
+    <header class="gm-header">
+        <h1>TERMINAL MESTRE DA GUILDA</h1>
+        <p>Acesso: Game Master (Nível 99) | Tempo do Jogo: [SINCRONIZADO COM RELÓGIO REAL]</p>
+    </header>
+    
+    <nav class="gm-nav">
+        <a href="/gm">Painel de Controle (Eventos)</a>
+        <a href="/gm-hub">Hub de Gerenciamento (Jogadores)</a>
+        <a href="/gm-loja">Hub da Loja (Economia)</a>
+        <a href="/gm-mapa" class="active">Mapa de Rastreamento (Pessoas)</a> </nav>
+    
+    <div class="gm-container">
+        <div class="gm-coluna">
+            <div class="gm-widget">
+                <h3>MAPA DE RASTREAMENTO (ENFF)</h3>
+                <div class="widget-content">
+                    <div class="map-grid-gm" id="mapa-grid-gm">
+                        <div class="grid-square" id="map-setor-1-germinal" data-setor="Setor 1 (Germinal)">
+                            <span class="grid-title">Germinal</span>
+                            <div class="grid-ocupantes"></div>
+                        </div>
+                        <div class="grid-square" id="map-setor-2-eletrico" data-setor="Setor 2 (Elétrico)">
+                            <span class="grid-title">Setor 2 (Elétrico)</span>
+                            <div class="grid-ocupantes"></div>
+                        </div>
+                        <div class="grid-square" id="map-setor-3-hidroponicos" data-setor="Setor 3 (Hidropônicos)">
+                            <span class="grid-title">Setor 3 (Hidro)</span>
+                            <div class="grid-ocupantes"></div>
+                        </div>
+                        <div class="grid-square" id="map-setor-4-refeitorio" data-setor="Setor 4 (Refeitório)">
+                            <span class="grid-title">Setor 4 (Refeitório)</span>
+                            <div class="grid-ocupantes"></div>
+                        </div>
+                        <div class="grid-square" id="map-area-externa-norte" data-setor="Área Externa (Norte)">
+                            <span class="grid-title">Ext. Norte</span>
+                            <div class="grid-ocupantes"></div>
+                        </div>
+                        <div class="grid-square" id="map-area-externa-sul" data-setor="Área Externa (Sul)">
+                            <span class="grid-title">Ext. Sul</span>
+                            <div class="grid-ocupantes"></div>
+                        </div>
+                        <div class="grid-square" id="map-setor-5-dormitorios" data-setor="Setor 5 (Dormitórios)">
+                            <span class="grid-title">Setor 5 (Dorms)</span>
+                            <div class="grid-ocupantes"></div>
+                        </div>
+                        <div class="grid-square" id="map-setor-6-oficinas" data-setor="Setor 6 (Oficinas)">
+                            <span class="grid-title">Setor 6 (Oficinas)</span>
+                            <div class="grid-ocupantes"></div>
+                        </div>
+                        <div class="grid-square" id="map-desconhecido" data-setor="Desconhecido">
+                            <span class="grid-title">Desconhecido</span>
+                            <div class="grid-ocupantes"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="gm-coluna">
+            <div class="gm-widget">
+                <h3>GERENCIADOR DE NPCs</h3>
+                <form id="form-npc-criar" class="form-multi-input">
+                    <input type="text" id="npc-nome" placeholder="Nome do NPC" required>
+                    <input type="text" id="npc-desc" placeholder="Descrição (ex: Vendedor Local)">
+                    <select id="npc-localizacao">
+                        <option value="Setor 1 (Germinal)">Setor 1 (Germinal)</option>
+                        <option value="Setor 2 (Elétrico)">Setor 2 (Elétrico)</option>
+                        <option value="Setor 3 (Hidropônicos)">Setor 3 (Hidropônicos)</option>
+                        <option value="Setor 4 (Refeitório)">Setor 4 (Refeitório)</option>
+                        <option value="Área Externa (Norte)">Área Externa (Norte)</option>
+                        <option value="Área Externa (Sul)">Área Externa (Sul)</option>
+                        <option value="Setor 5 (Dormitórios)">Setor 5 (Dormitórios)</option>
+                        <option value="Setor 6 (Oficinas)">Setor 6 (Oficinas)</option>
+                        <option value="Desconhecido">Desconhecido</option>
+                    </select>
+                    <button type="submit">[CRIAR NPC]</button>
+                </form>
+                <div class="widget-content">
+                    <h4>NPCs no Habitat:</h4>
+                    <ul id="lista-npcs">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- FUNÇÕES HELPER ---
+        
+        // Pega a lista de setores do HTML para usar nos dropdowns
+        const setoresDoMapa = Array.from(document.querySelectorAll('.grid-square'))
+                                    .map(sq => sq.dataset.setor);
+
+        function criarDropdownSetores(npcId, selecionado) {
+            let html = `<select class="npc-move-select" data-id="${npcId}">`;
+            setoresDoMapa.forEach(setor => {
+                html += `<option value="${setor}" ${selecionado === setor ? 'selected' : ''}>${setor}</option>`;
+            });
+            html += `</select>`;
+            return html;
+        }
+        
+        // --- FUNÇÕES DE CARREGAMENTO (READ) ---
+        
+        async function carregarMapaLocalizacoes() {
+            try {
+                const response = await fetch('/api/mapa/localizacoes');
+                const localizacoes = await response.json(); // Lista de {nome, local, tipo}
+                
+                // 1. Limpa todos os icons do mapa
+                document.querySelectorAll('.grid-ocupantes').forEach(el => el.innerHTML = '');
+                
+                // 2. Redesenha os icons
+                localizacoes.forEach(p => {
+                    // Normaliza o nome do setor para um ID de HTML
+                    // "Setor 1 (Germinal)" -> "map-setor-1-germinal"
+                    const setorId = "map-" + (p.local || 'desconhecido').toLowerCase()
+                                        .replace(/ /g, '-')
+                                        .replace(/[\(\)]/g, ''); // Remove parênteses
+                    
+                    const square = document.getElementById(setorId);
+                    
+                    if (square) {
+                        // Adiciona o "pino" do jogador/npc no quadrado
+                        const tipoClasse = (p.tipo === 'jogador') ? 'loc-jogador' : 'loc-npc';
+                        square.querySelector('.grid-ocupantes').innerHTML += 
+                            `<span class="loc-pino ${tipoClasse}">${p.nome}</span>`;
+                    }
+                });
+                
+            } catch (err) { console.error('Erro ao carregar localizações:', err); }
+        }
+        
+        async function carregarNPCs() {
+            try {
+                const response = await fetch('/api/npcs');
+                const npcs = await response.json();
+                const lista = document.getElementById('lista-npcs');
+                lista.innerHTML = ''; 
+                
+                if (npcs.length === 0) {
+                    lista.innerHTML = '<li>Nenhum NPC criado.</li>';
+                }
+                
+                npcs.forEach(npc => {
+                    lista.innerHTML += `
+                        <li class="npc-item">
+                            <div class="npc-info">
+                                <strong>${npc.nome}</strong>
+                                <em>${npc.descricao || 'Sem descrição'}</em>
+                            </div>
+                            <div class="npc-controls">
+                                ${criarDropdownSetores(npc.id, npc.localizacao_atual)}
+                                <button class="btn-npc-delete btn-task-delete" data-id="${npc.id}">[X]</button>
+                            </div>
+                        </li>`;
+                });
+            } catch (err) { console.error('Erro ao carregar NPCs:', err); }
+        }
+
+        // --- FUNÇÕES DE ENVIO (CREATE) ---
+        
+        document.getElementById('form-npc-criar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('npc-nome').value;
+            const desc = document.getElementById('npc-desc').value;
+            const local = document.getElementById('npc-localizacao').value;
+            
+            if (!nome) return;
+            
+            const response = await fetch('/api/npcs', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ nome: nome, descricao: desc, localizacao: local })
+            });
+            
+            if (!response.ok) {
+                const err = await response.json();
+                alert(`Erro: ${err.erro}`);
+            } else {
+                document.getElementById('npc-nome').value = '';
+                document.getElementById('npc-desc').value = '';
+                carregarNPCs();
+                carregarMapaLocalizacoes();
+            }
+        });
+
+        // --- FUNÇÕES DE GERENCIAMENTO (DELETE / UPDATE) ---
+        
+        // (Event Delegation para a lista de NPCs)
+        document.getElementById('lista-npcs').addEventListener('click', async (e) => {
+            // Deletar NPC
+            if (e.target.classList.contains('btn-npc-delete')) {
+                const id = e.target.dataset.id;
+                if (!id) return;
+                if (confirm('REMOVER este NPC permanentemente?')) {
+                    await fetch(`/api/npcs/${id}`, { method: 'DELETE' });
+                    carregarNPCs();
+                    carregarMapaLocalizacoes();
+                }
+            }
+        });
+        
+        document.getElementById('lista-npcs').addEventListener('change', async (e) => {
+            // Mover NPC (Dropdown)
+            if (e.target.classList.contains('npc-move-select')) {
+                const id = e.target.dataset.id;
+                const novoLocal = e.target.value;
+                if (!id) return;
+                
+                await fetch(`/api/npcs/${id}/localizacao`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ localizacao: novoLocal })
+                });
+                
+                carregarMapaLocalizacoes(); // Atualiza o mapa
+            }
+        });
+
+        // --- INICIALIZAÇÃO ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await carregarNPCs();
+            await carregarMapaLocalizacoes();
+            
+            // Atualiza o mapa a cada 5 segundos
+            setInterval(carregarMapaLocalizacoes, 5000);
+        });
+    </script>
+</body>
+</html>
