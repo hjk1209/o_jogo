@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+body {
+    background-color: #0d0d0d;
+    color: #00ff41; /* Verde-terminal */
+    font-family: 'Roboto Mono', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-container {
+    background-color: #1a1a1a;
+    border: 2px solid #00ff41;
+    padding: 25px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 0 20px #00ff41;
+}
+
+h2 {
+    text-align: center;
+    margin-top: 0;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+.form-group input {
+    width: 95%;
+    padding: 10px;
+    background-color: #0d0d0d;
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.btn-login {
+    width: 100%;
+    background-color: #00ff41;
+    color: #0d0d0d;
+    border: none;
+    padding: 15px 20px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: bold;
+    font-size: 1.1em;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+.btn-login:hover {
+    background-color: #ffffff;
+}
+
+.btn-register {
+    display: block;
+    width: 99%;
+    text-align: center;
+    color: #aaa;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+.btn-register:hover {
+    color: #00ff41;
+}
+
+.error-message {
+    color: #ff4141;
+    background-color: #400;
+    border: 1px solid #ff4141;
+    padding: 10px;
+    margin-bottom: 15px;
+    display: none; /* Aparece com JS */
+}
+.error-message:not(:empty) {
+    display: block;
+}
+
+.success-message {
+    color: #00ff41;
+    background-color: #040;
+    border: 1px solid #00ff41;
+    padding: 10px;
+    margin-bottom: 15px;
+    display: none;
+}
+.success-message:not(:empty) {
+    display: block;
+}
+
+hr {
+    border: none;
+    border-top: 1px dashed #444;
+    margin: 20px 0;
+}
+p {
+    text-align: center;
+    color: #aaa;
+    font-size: 0.9em;
+}
