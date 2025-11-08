@@ -37,64 +37,71 @@
             </div>
             <div class="form-group">
                 <label for="classe_origem">Classe / Origem (Opcional):</label>
-                <input type="text" id="classe_origem" name="classe_origem" placeholder="Ex: Engenheiro, Batedor, Mago...">
+                <input type="text" id="classe_origem" name="classe_origem" placeholder="Ex: Engenheiro, Batedor...">
             </div>
             <div class="form-group">
                 <label for="motivacao">Motivação (Opcional):</label>
                 <textarea id="motivacao" name="motivacao" rows="3" placeholder="Porque você se juntou à Guilda?"></textarea>
             </div>
             
-            <button type="submit" class="login-btn">[REGISTRAR E CONECTAR]</button>
+            <button type="submit" class="login-btn">[REGISTRAR CONTA]</button>
         </form>
         
         <div id="register-error" class="login-error"></div>
+        <div id="register-success" class="login-success" style="display: none;"></div>
         
         <div class="login-footer">
             <p>Já possui um registro?</p>
-            <a href="login.html">[FAZER LOGIN]</a>
-        </div>
+            <a href="index.html">[FAZER LOGIN]</a> </div>
     </div>
 
     <script>
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const nome_aventureiro = document.getElementById('nome_aventureiro').value;
-            const nome_jogador = document.getElementById('nome_jogador').value;
-            const classe_origem = document.getElementById('classe_origem').value;
-            const motivacao = document.getElementById('motivacao').value;
-            
             const errorDiv = document.getElementById('register-error');
+            const successDiv = document.getElementById('register-success');
+            errorDiv.textContent = '';
+            successDiv.style.display = 'none';
+
+            const data = {
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                nome_aventureiro: document.getElementById('nome_aventureiro').value,
+                nome_jogador: document.getElementById('nome_jogador').value,
+                classe_origem: document.getElementById('classe_origem').value,
+                motivacao: document.getElementById('motivacao').value
+            };
+            
+            // --- CORREÇÃO DE CORS/REDIRECT ---
+            // Detecta se estamos em localhost ou no servidor online
+            const baseUrl = window.location.hostname.includes('127.0.0.1') 
+                            ? 'http://127.0.0.1:5000' 
+                            : 'https://o-jogo.onrender.com'; // <-- MUDE ESTE URL se o seu Render for diferente
             
             try {
-                const response = await fetch('https://o-jogo.onrender.com/api/register', {
+                const response = await fetch(`${baseUrl}/api/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        username: username, 
-                        password: password,
-                        nome_aventureiro: nome_aventureiro,
-                        nome_jogador: nome_jogador,
-                        classe_origem: classe_origem,
-                        motivacao: motivacao
-                    })
+                    body: JSON.stringify(data)
                 });
                 
-                const data = await response.json();
+                const result = await response.json();
                 
                 if (response.ok) {
-                    // SUCESSO! Avisa e redireciona para o login
-                    alert('Registro concluído com sucesso!\nVocê agora pode fazer login com seu novo usuário.');
-                    window.location.href = 'login.html';
+                    // SUCESSO!
+                    successDiv.textContent = 'Registro concluído! Redirecionando para o login...';
+                    successDiv.style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = 'index.html'; // Redireciona para o login (index.html)
+                    }, 2000);
                 } else {
-                    // Falha no registro
-                    errorDiv.textContent = `Falha no registro: ${data.erro}`;
+                    // Falha (ex: usuário já existe)
+                    throw new Error(result.erro || 'Erro desconhecido');
                 }
             } catch (error) {
                 console.error("Erro ao tentar registrar:", error);
-                errorDiv.textContent = 'Erro: O servidor do Habitat (app.py) parece estar offline.';
+                errorDiv.textContent = `Falha no registro: ${error.message}`;
             }
         });
         
@@ -109,5 +116,4 @@
         }
     </script>
 </body>
-
 </html>

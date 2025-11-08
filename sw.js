@@ -29,11 +29,14 @@ self.addEventListener('install', (event) => {
 
 // 2. Evento de Fetch (Busca): Intercepta pedidos de rede.
 self.addEventListener('fetch', (event) => {
-    // Se for um pedido de API (para o nosso backend), não guarde em cache.
+    
+    // --- ESTA É A CORREÇÃO ---
+    // Se for um pedido de API (para o nosso backend), IGNORE O CACHE.
     // Vá sempre à rede (online).
     if (event.request.url.includes('/api/')) {
         return event.respondWith(fetch(event.request));
     }
+    // --- FIM DA CORREÇÃO ---
 
     // Se for um ficheiro do nosso app (HTML, CSS, JS), tente o cache primeiro.
     event.respondWith(
@@ -50,10 +53,6 @@ self.addEventListener('fetch', (event) => {
                         return networkResponse;
                     });
                 });
-            })
-            .catch(() => {
-                // Se a rede falhar e não estiver no cache (ex: offline pela 1ª vez)
-                // (Podemos retornar uma página "offline" aqui, mas por agora, apenas falha)
             })
     );
 });

@@ -17,7 +17,15 @@ except locale.Error:
     print("Locale 'pt_BR.UTF-8' não encontrado. Usando locale padrão.")
 
 app = Flask(__name__)
-CORS(app) 
+# --- CORREÇÃO DE CORS (para Render/Netlify) ---
+origins = [
+    "https://guia-kaibora.netlify.app", # O seu site Netlify
+    "http://127.0.0.1:5500",
+    "http://127.0.0.1:5501",
+    "null" # Para testes locais (abrir o ficheiro diretamente)
+]
+CORS(app, origins=origins, supports_credentials=True)
+
 base_dir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(base_dir, 'kaibora.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -29,8 +37,6 @@ db = SQLAlchemy(app)
 ALERTAS_DB = [] 
 
 # --- MODELOS DE BANCO DE DADOS ---
-
-# MODELO AVENTUREIRO (ATUALIZADO)
 class Aventureiro(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -45,13 +51,9 @@ class Aventureiro(db.Model):
     habilidades = db.Column(db.Text, nullable=True, default='')
     backup_arquivos = db.Column(db.Text, nullable=True, default='{}') 
     inventario = db.Column(db.Text, nullable=True, default='{}')
-    
-    # NOVO: Localização em tempo real
     localizacao_atual = db.Column(db.String(100), nullable=True, default='Desconhecido')
-    
     def set_password(self, password): self.password_hash = generate_password_hash(password)
     def check_password(self, password): return check_password_hash(self.password_hash, password)
-    
     def to_dict(self):
         return {
             "id": self.id, "username": self.username, "nome_aventureiro": self.nome_aventureiro,
@@ -59,10 +61,8 @@ class Aventureiro(db.Model):
             "motivacao": self.motivacao, "xp": self.xp, "kaicons": self.kaicons,
             "nivel": self.nivel, "habilidades": self.habilidades,
             "backup_arquivos": self.backup_arquivos, "inventario": self.inventario,
-            "localizacao_atual": self.localizacao_atual # NOVO
+            "localizacao_atual": self.localizacao_atual
         }
-
-# (Modelos Tarefa, Cronograma, Rodizio, RegistroInformes, ChatMensagem, LojaItem, HabitatSistema, EsbocoMapa - Sem alterações)
 class Tarefa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     texto = db.Column(db.String(200), nullable=False)
@@ -120,22 +120,30 @@ class EsbocoMapa(db.Model):
             "id": self.id, "timestamp": self.timestamp.strftime("%d/%m %H:%M"),
             "nome_autor": self.nome_autor, "nome_setor": self.nome_setor, "notas": self.notas
         }
-        
-# --- NOVO MODELO: NPCs ---
 class NPC(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
     descricao = db.Column(db.Text, nullable=True)
     localizacao_atual = db.Column(db.String(100), nullable=True, default='Germinal')
-
     def to_dict(self):
         return {
             "id": self.id, "nome": self.nome, "descricao": self.descricao,
             "localizacao_atual": self.localizacao_atual
         }
+# --- NOVO MODELO: PRODUÇÃO (Crafting) ---
+class Receita(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome_item_final = db.Column(db.String(100), nullable=False)
+    quantia_produzida = db.Column(db.Integer, nullable=False, default=1)
+    ingredientes_json = db.Column(db.Text, nullable=False, default='{}')
+    def to_dict(self):
+        return {
+            "id": self.id, "nome_item_final": self.nome_item_final,
+            "quantia_produzida": self.quantia_produzida,
+            "ingredientes_json": self.ingredientes_json
+        }
 
 # --- FUNÇÕES HELPER ---
-# (get_lista_nomes_jogadores, calcular_atribuicao, adicionar_informe, calcular_xp_necessario, verificar_level_up, adicionar_alerta_global - Sem alterações)
 def get_lista_nomes_jogadores():
     try:
         aventureiros = Aventureiro.query.all()
@@ -185,7 +193,6 @@ def adicionar_alerta_global(texto):
         ALERTAS_DB.pop()
 
 # --- ROTAS DE AUTENTICAÇÃO ---
-# (POST /api/register, POST /api/login - Sem alterações)
 @app.route('/api/register', methods=['POST'])
 def register():
     data = request.json
@@ -201,7 +208,7 @@ def register():
         nome_jogador=data.get('nome_jogador', ''),
         classe_origem=data.get('classe_origem', ''),
         motivacao=data.get('motivacao', ''),
-        localizacao_atual='Setor 1 (Germinal)' # NOVO: Define local inicial
+        localizacao_atual='Setor 1 (Germinal)'
     )
     novo_aventureiro.set_password(password)
     db.session.add(novo_aventureiro); db.session.commit()
@@ -218,7 +225,6 @@ def login():
     return jsonify(access_token=access_token)
 
 # --- ROTAS DO APP DO JOGADOR (kaibora.html) ---
-# (GET /api/tarefas, /api/alertas, /api/cronogramas, /api/time, /api/status/eventos - Sem alterações)
 @app.route('/api/tarefas', methods=['GET'])
 @jwt_required()
 def get_tarefas(): return jsonify([tarefa.to_dict() for tarefa in Tarefa.query.all()])
@@ -239,7 +245,6 @@ def get_current_events():
     agora = datetime.now()
     eventos_db = Cronograma.query.filter_by(hora=agora.hour, minuto=agora.minute).all()
     return jsonify([evento.texto for evento in eventos_db])
-# (GET /api/rodizio/meu-horario, /api/aventureiro/status, /api/informes, /api/aventureiros/lista - Sem alterações)
 @app.route('/api/rodizio/meu-horario', methods=['GET'])
 @jwt_required()
 def get_meu_rodizio_horario():
@@ -277,7 +282,6 @@ def get_lista_aventureiros_ativos():
     aventureiros = Aventureiro.query.filter(Aventureiro.nome_aventureiro != nome_logado).all()
     nomes = [a.nome_aventureiro for a in aventureiros]
     return jsonify(nomes)
-# (POST /api/transferir, GET/POST /api/chat, POST /api/aventureiro/backup - Sem alterações)
 @app.route('/api/transferir', methods=['POST'])
 @jwt_required()
 def transferir_kaicons():
@@ -334,7 +338,6 @@ def backup_arquivos():
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
-# (GET /api/loja-itens, POST /api/loja/comprar/<id> - Sem alterações)
 @app.route('/api/loja-itens', methods=['GET'])
 @jwt_required() 
 def get_loja_itens_jogador():
@@ -369,7 +372,6 @@ def comprar_item_loja(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
-# (GET /api/mapa/esbocos, POST /api/mapa/esboco - Sem alterações)
 @app.route('/api/mapa/esbocos', methods=['GET'])
 def get_esbocos():
     esbocos_db = EsbocoMapa.query.order_by(EsbocoMapa.timestamp.desc()).limit(20).all()
@@ -392,18 +394,14 @@ def submit_esboco():
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
-
-# --- NOVA ROTA: Ping de Localização do Jogador ---
 @app.route('/api/aventureiro/localizacao', methods=['POST'])
 @jwt_required()
 def set_localizacao():
     nome_aventureiro = get_jwt_identity()
     aventureiro = Aventureiro.query.filter_by(nome_aventureiro=nome_aventureiro).first_or_404()
-    
     local = request.json.get('localizacao')
     if not local:
         return jsonify({"erro": "Localização não fornecida."}), 400
-        
     try:
         aventureiro.localizacao_atual = local
         db.session.commit()
@@ -411,9 +409,65 @@ def set_localizacao():
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
+        
+# --- ROTAS DE PRODUÇÃO (JOGADOR) ---
+@app.route('/api/receitas', methods=['GET'])
+@jwt_required()
+def get_receitas_jogador():
+    receitas = Receita.query.order_by(Receita.nome_item_final).all()
+    return jsonify([r.to_dict() for r in receitas])
 
-# --- ROTAS DO TERMINAL DO GM (gm.html) ---
-# (GET /gm, GET /gm-hub, GET /gm-loja - Sem alterações)
+@app.route('/api/produzir/<int:id_receita>', methods=['POST'])
+@jwt_required()
+def produzir_item(id_receita):
+    # 1. Identifica o jogador e a receita
+    nome_jogador = get_jwt_identity()
+    jogador = Aventureiro.query.filter_by(nome_aventureiro=nome_jogador).first_or_404()
+    receita = Receita.query.get(id_receita)
+    if not receita:
+        return jsonify({"erro": "Receita não encontrada."}), 404
+        
+    try:
+        # 2. Carrega o inventário do jogador e os ingredientes da receita
+        inventario = json.loads(jogador.inventario)
+        ingredientes = json.loads(receita.ingredientes_json)
+        
+        # 3. Verifica se o jogador tem os materiais
+        for item, quantia_necessaria in ingredientes.items():
+            item_norm = item.strip().lower() # Garante a normalização
+            quantia_no_inventario = inventario.get(item_norm, 0)
+            
+            if quantia_no_inventario < quantia_necessaria:
+                return jsonify({"erro": f"Materiais insuficientes. Falta: {item_norm} (x{quantia_necessaria - quantia_no_inventario})."}), 400
+        
+        # 4. Se tiver, consome os materiais
+        for item, quantia_necessaria in ingredientes.items():
+            item_norm = item.strip().lower()
+            inventario[item_norm] -= quantia_necessaria
+            if inventario[item_norm] == 0:
+                del inventario[item_norm]
+                
+        # 5. Adiciona o item final
+        item_final_norm = receita.nome_item_final.strip().lower()
+        quantia_atual_final = inventario.get(item_final_norm, 0)
+        inventario[item_final_norm] = quantia_atual_final + receita.quantia_produzida
+        
+        # 6. Salva o inventário de volta no DB
+        jogador.inventario = json.dumps(inventario)
+        
+        # 7. Adiciona ao Log
+        adicionar_informe(f"[OFICINA] {jogador.nome_aventureiro} produziu {receita.quantia_produzida}x '{item_final_norm}'.")
+        
+        db.session.commit()
+        
+        return jsonify(jogador.to_dict()), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erro": str(e)}), 500
+
+
+# --- ROTAS DO TERMINAL DO GM ---
 @app.route('/gm')
 def gm_dashboard():
     try: return render_template('gm.html')
@@ -426,16 +480,19 @@ def gm_hub_dashboard():
 def gm_loja_dashboard():
     try: return render_template('gm_loja.html')
     except Exception as e: return f"Erro: 'gm_loja.html' não encontrado. {e}", 404
-    
-# --- NOVA ROTA: Hub do Mapa (GM) ---
 @app.route('/gm-mapa')
 def gm_mapa_dashboard():
+    try: return render_template('gm_mapa.html')
+    except Exception as e: return f"Erro: 'gm_mapa.html' não encontrado. {e}", 404
+    
+# --- NOVA ROTA: Hub da Oficina (GM) ---
+@app.route('/gm-oficina')
+def gm_oficina_dashboard():
     try: 
-        return render_template('gm_mapa.html') # Serve o novo arquivo
+        return render_template('gm_oficina.html') # Serve o novo arquivo
     except Exception as e: 
-        return f"Erro: 'gm_mapa.html' não encontrado. {e}", 404
+        return f"Erro: 'gm_oficina.html' não encontrado. {e}", 404
 
-# (GET /api/jogadores, DELETE /api/jogadores/<nome> - Sem alterações)
 @app.route('/api/jogadores', methods=['GET'])
 def get_jogadores():
     aventureiros = Aventureiro.query.order_by(Aventureiro.nome_aventureiro).all()
@@ -457,7 +514,6 @@ def delete_jogador(nome):
         return jsonify({"erro": str(e)}), 500
 
 # --- GERENCIAMENTO DE TAREFAS (Quests) ---
-# (POST, DELETE, /complete - Sem alterações)
 @app.route('/api/tarefas', methods=['POST'])
 def add_tarefa():
     try:
@@ -499,7 +555,6 @@ def complete_tarefa(id):
         return jsonify({"erro": str(e)}), 500
 
 # --- GERENCIAMENTO DE ALERTAS ---
-# (POST, DELETE - Sem alterações)
 @app.route('/api/alertas', methods=['POST'])
 def add_alerta():
     try:
@@ -515,7 +570,6 @@ def clear_alertas():
     return jsonify({"message": "Alertas limpos"}), 200
 
 # --- GERENCIAMENTO DE CRONOGRAMAS (Eventos) ---
-# (POST, DELETE - Sem alterações)
 @app.route('/api/cronogramas', methods=['POST'])
 def add_cronograma():
     try:
@@ -538,7 +592,6 @@ def delete_cronograma(id):
     return jsonify({"erro": "Cronograma não encontrado"}), 404
 
 # --- GERENCIAMENTO DE RODÍZIO (Tarefas Comunitárias) ---
-# (GET, POST, DELETE - Sem alterações)
 @app.route('/api/rodizio', methods=['GET'])
 def get_rodizio():
     hoje = datetime.now().date()
@@ -569,7 +622,7 @@ def delete_rodizio_tarefa(id):
         return jsonify({"message": "Tipo de tarefa de rodízio removida"}), 200
     return jsonify({"erro": "Tipo de tarefa de rodízio não encontrada"}), 404
 
-# (POST /api/informes - Sem alterações)
+# (POST /api/informes)
 @app.route('/api/informes', methods=['POST'])
 def add_informe_manual():
     data = request.json
@@ -578,7 +631,7 @@ def add_informe_manual():
     adicionar_informe(f"[INFORME MANUAL] {texto}")
     return jsonify({"message": "Informe adicionado ao registro."}), 201
 
-# (POST /api/aventureiro/ajustar-stats - Sem alterações)
+# (POST /api/aventureiro/ajustar-stats)
 @app.route('/api/aventureiro/ajustar-stats', methods=['POST'])
 def adjust_stats():
     data = request.json
@@ -615,7 +668,7 @@ def adjust_stats():
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
 
-# (POST /api/aventureiro/ajustar-inventario - Sem alterações)
+# (POST /api/aventureiro/ajustar-inventario)
 @app.route('/api/aventureiro/ajustar-inventario', methods=['POST'])
 def adjust_inventario():
     data = request.json
@@ -647,12 +700,6 @@ def adjust_inventario():
     return jsonify(aventureiro.to_dict()), 200
 
 # --- GERENCIAMENTO DA LOJA (GM) ---
-# (GET /api/loja-itens, POST /api/loja-item, DELETE /api/loja-item/<id>, POST /api/loja/ajustar, GET /api/informes/loja - Sem alterações)
-@app.route('/api/loja-itens', methods=['GET'])
-@jwt_required()
-def get_loja_itens():
-    itens = LojaItem.query.order_by(LojaItem.nome).all()
-    return jsonify([item.to_dict() for item in itens])
 @app.route('/api/loja-item', methods=['POST'])
 def add_loja_item():
     try:
@@ -712,7 +759,6 @@ def get_informes_loja():
     return jsonify([informe.to_dict() for informe in informes_db])
 
 # --- MÓDULO DE CONTROLE DO HABITAT ---
-# (GET /api/habitat/sistemas, PUT /api/habitat/sistemas/<id>/status - Sem alterações)
 @app.route('/api/habitat/sistemas', methods=['GET'])
 def get_habitat_sistemas():
     sistemas = HabitatSistema.query.order_by(HabitatSistema.id).all()
@@ -741,57 +787,45 @@ def set_habitat_sistema_status(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
-
-# --- NOVAS ROTAS: GERENCIAMENTO DE NPCs E MAPA DE RASTREAMENTO ---
+        
+# --- ROTAS DE GERENCIAMENTO DE NPCs E MAPA DE RASTREAMENTO ---
 @app.route('/api/npcs', methods=['GET'])
 def get_npcs():
     npcs = NPC.query.order_by(NPC.nome).all()
     return jsonify([npc.to_dict() for npc in npcs])
-
 @app.route('/api/npcs', methods=['POST'])
 def add_npc():
     try:
         data = request.json
-        nome = data.get('nome')
-        desc = data.get('descricao')
-        local = data.get('localizacao', 'Germinal')
-        
+        nome = data.get('nome'); desc = data.get('descricao'); local = data.get('localizacao', 'Germinal')
         if not nome:
             return jsonify({"erro": "Nome do NPC é obrigatório."}), 400
         if NPC.query.filter_by(nome=nome).first():
             return jsonify({"erro": "Um NPC com este nome já existe."}), 400
-            
         novo_npc = NPC(nome=nome, descricao=desc, localizacao_atual=local)
-        db.session.add(novo_npc)
-        db.session.commit()
-        
+        db.session.add(novo_npc); db.session.commit()
         adicionar_informe(f"[SISTEMA] NPC '{nome}' foi adicionado ao Habitat.")
         return jsonify(novo_npc.to_dict()), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
-
 @app.route('/api/npcs/<int:id>', methods=['DELETE'])
 def delete_npc(id):
     npc = NPC.query.get(id)
     if npc:
         nome_npc = npc.nome
-        db.session.delete(npc)
-        db.session.commit()
+        db.session.delete(npc); db.session.commit()
         adicionar_informe(f"[SISTEMA] NPC '{nome_npc}' foi removido do Habitat.")
         return jsonify({"message": "NPC removido"}), 200
     return jsonify({"erro": "NPC não encontrado"}), 404
-
 @app.route('/api/npcs/<int:id>/localizacao', methods=['PUT'])
 def move_npc(id):
     npc = NPC.query.get(id)
     if not npc:
         return jsonify({"erro": "NPC não encontrado."}), 404
-        
     local = request.json.get('localizacao')
     if not local:
         return jsonify({"erro": "Localização não fornecida."}), 400
-        
     try:
         npc.localizacao_atual = local
         db.session.commit()
@@ -799,28 +833,66 @@ def move_npc(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
-
 @app.route('/api/mapa/localizacoes', methods=['GET'])
 def get_mapa_localizacoes():
-    """ Retorna a localização de TODOS os Aventureiros e NPCs. """
     try:
-        # 1. Pega todos os jogadores
         aventureiros = Aventureiro.query.all()
         loc_jogadores = [{"nome": a.nome_aventureiro, "local": a.localizacao_atual, "tipo": "jogador"} for a in aventureiros]
-        
-        # 2. Pega todos os NPCs
         npcs = NPC.query.all()
         loc_npcs = [{"nome": n.nome, "local": n.localizacao_atual, "tipo": "npc"} for n in npcs]
-        
-        # 3. Combina as listas
         return jsonify(loc_jogadores + loc_npcs)
-        
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
+# --- NOVAS ROTAS: GERENCIAMENTO DE PRODUÇÃO (GM) ---
+@app.route('/api/receitas', methods=['GET'])
+@jwt_required() # Protegido para GM e Jogador
+def get_receitas():
+    receitas = Receita.query.order_by(Receita.nome_item_final).all()
+    return jsonify([r.to_dict() for r in receitas])
+
+@app.route('/api/receitas', methods=['POST'])
+def add_receita():
+    try:
+        data = request.json
+        nome_item_final = data.get('nome_item_final')
+        quantia_produzida = int(data.get('quantia_produzida', 1))
+        ingredientes_json = data.get('ingredientes_json') 
+        
+        if not nome_item_final or not ingredientes_json:
+            return jsonify({"erro": "Nome do item e ingredientes (JSON) são obrigatórios."}), 400
+        try:
+            json.loads(ingredientes_json)
+        except json.JSONDecodeError:
+            return jsonify({"erro": "Formato de Ingredientes JSON inválido."}), 400
+            
+        nova_receita = Receita(
+            nome_item_final=nome_item_final.strip().lower(),
+            quantia_produzida=quantia_produzida,
+            ingredientes_json=ingredientes_json
+        )
+        db.session.add(nova_receita)
+        db.session.commit()
+        
+        adicionar_informe(f"[OFICINA] Nova receita criada: {nova_receita.nome_item_final}")
+        return jsonify(nova_receita.to_dict()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erro": str(e)}), 500
+
+@app.route('/api/receitas/<int:id>', methods=['DELETE'])
+def delete_receita(id):
+    receita = Receita.query.get(id)
+    if receita:
+        nome_receita = receita.nome_item_final
+        db.session.delete(receita)
+        db.session.commit()
+        adicionar_informe(f"[OFICINA] Receita removida: {nome_receita}.")
+        return jsonify({"message": "Receita removida"}), 200
+    return jsonify({"erro": "Receita não encontrada"}), 404
+
 # --- FUNÇÃO DE INICIALIZAÇÃO DO BANCO DE DADOS ---
 def create_initial_data():
-    # ... (Popula Tarefas, Cronogramas, Rodízio, Informes, Chat, Loja, Habitat e Esboços) ...
     if Tarefa.query.first() is None:
         print("Criando tarefas iniciais...")
         db.session.add_all([
@@ -853,7 +925,9 @@ def create_initial_data():
         print("Abastecendo a loja da Guilda...")
         db.session.add_all([
             LojaItem(nome="Ração de Viagem", descricao="Uma barra de nutrientes compactada.", preco=10, estoque=100),
-            LojaItem(nome="Kit Médico Básico", descricao="Contém ataduras e antisséptico.", preco=50, estoque=20)
+            LojaItem(nome="Kit Médico Básico", descricao="Contém ataduras e antisséptico.", preco=50, estoque=20),
+            LojaItem(nome="tecido", descricao="Retalho de tecido limpo.", preco=5, estoque=100),
+            LojaItem(nome="antisseptico", descricao="Frasco de líquido esterilizante.", preco=30, estoque=100)
         ])
     if HabitatSistema.query.first() is None:
         print("Registrando sistemas do Habitat...")
@@ -868,14 +942,22 @@ def create_initial_data():
         db.session.add(
             EsbocoMapa(nome_autor="Operador Antigo", nome_setor="Refeitório", notas="Layout original, antes do colapso do teto.")
         )
-        
-    # --- NOVO: Popula os NPCs ---
     if NPC.query.first() is None:
         print("Adicionando NPCs iniciais...")
         db.session.add_all([
             NPC(nome="Engenheiro Chefe (NPC)", descricao="Obsessivo com a manutenção.", localizacao_atual="Setor 6 (Oficinas)"),
             NPC(nome="Cozinheira (NPC)", descricao="Controla o estoque de alimentos.", localizacao_atual="Setor 4 (Refeitório)")
         ])
+    
+    # --- NOVO: Popula as Receitas Iniciais ---
+    if Receita.query.first() is None:
+        print("Adicionando receitas de produção iniciais...")
+        r1 = Receita(
+            nome_item_final="kit medico basico", 
+            quantia_produzida=1,
+            ingredientes_json='{"tecido": 2, "antisseptico": 1}'
+        )
+        db.session.add(r1)
         
     db.session.commit()
 
