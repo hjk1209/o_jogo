@@ -278,7 +278,7 @@
                 };
                 if (body) { options.body = JSON.stringify(body); }
                 
-                const response = await fetch(`http://127.0.0.1:5000${url}`, options);
+                const response = await fetch(`https://o-jogo.onrender.com${url}`, options);
                 
                 if (response.status === 401) {
                     setRedeStatus(false, "NÃO AUTORIZADO");
@@ -851,4 +851,5 @@
         }
     </script>
 </body>
+
 </html>
