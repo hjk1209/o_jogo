@@ -63,13 +63,23 @@ class Aventureiro(db.Model):
             "backup_arquivos": self.backup_arquivos, "inventario": self.inventario,
             "localizacao_atual": self.localizacao_atual
         }
+
+# MODELO TAREFA (ATUALIZADO)
 class Tarefa(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     texto = db.Column(db.String(200), nullable=False)
     xp_reward = db.Column(db.Integer, default=10)
     kc_reward = db.Column(db.Integer, default=5)
+    # NOVO: Status da Tarefa (ATIVA, PENDENTE, CONCLUIDA)
+    status = db.Column(db.String(50), nullable=False, default='ATIVA')
+    
     def to_dict(self):
-        return {"id": self.id, "texto": self.texto, "xp_reward": self.xp_reward, "kc_reward": self.kc_reward}
+        return {
+            "id": self.id, "texto": self.texto, 
+            "xp_reward": self.xp_reward, "kc_reward": self.kc_reward,
+            "status": self.status # NOVO
+        }
+
 class Cronograma(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     hora = db.Column(db.Integer, nullable=False)
@@ -130,7 +140,6 @@ class NPC(db.Model):
             "id": self.id, "nome": self.nome, "descricao": self.descricao,
             "localizacao_atual": self.localizacao_atual
         }
-# --- NOVO MODELO: PRODUÇÃO (Crafting) ---
 class Receita(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome_item_final = db.Column(db.String(100), nullable=False)
@@ -227,7 +236,30 @@ def login():
 # --- ROTAS DO APP DO JOGADOR (kaibora.html) ---
 @app.route('/api/tarefas', methods=['GET'])
 @jwt_required()
-def get_tarefas(): return jsonify([tarefa.to_dict() for tarefa in Tarefa.query.all()])
+def get_tarefas(): 
+    # ATUALIZADO: Só envia tarefas ATIVAS ou PENDENTES para o jogador
+    tarefas = Tarefa.query.filter(Tarefa.status != 'CONCLUIDA').all()
+    return jsonify([tarefa.to_dict() for tarefa in tarefas])
+
+# --- NOVA ROTA: Jogador pede conclusão da tarefa ---
+@app.route('/api/tarefas/<int:id>/pedir-conclusao', methods=['POST'])
+@jwt_required()
+def pedir_conclusao_tarefa(id):
+    tarefa = Tarefa.query.get(id)
+    if not tarefa:
+        return jsonify({"erro": "Tarefa não encontrada."}), 404
+    
+    nome_aventureiro = get_jwt_identity()
+    
+    try:
+        tarefa.status = 'PENDENTE'
+        adicionar_informe(f"[TAREFA] {nome_aventureiro} marcou a tarefa '{tarefa.texto}' como PENDENTE DE APROVAÇÃO.")
+        db.session.commit()
+        return jsonify(tarefa.to_dict()), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erro": str(e)}), 500
+
 @app.route('/api/alertas', methods=['GET'])
 @jwt_required()
 def get_alertas(): return jsonify(ALERTAS_DB)
@@ -409,63 +441,42 @@ def set_localizacao():
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
-        
-# --- ROTAS DE PRODUÇÃO (JOGADOR) ---
 @app.route('/api/receitas', methods=['GET'])
 @jwt_required()
 def get_receitas_jogador():
     receitas = Receita.query.order_by(Receita.nome_item_final).all()
     return jsonify([r.to_dict() for r in receitas])
-
 @app.route('/api/produzir/<int:id_receita>', methods=['POST'])
 @jwt_required()
 def produzir_item(id_receita):
-    # 1. Identifica o jogador e a receita
     nome_jogador = get_jwt_identity()
     jogador = Aventureiro.query.filter_by(nome_aventureiro=nome_jogador).first_or_404()
     receita = Receita.query.get(id_receita)
     if not receita:
         return jsonify({"erro": "Receita não encontrada."}), 404
-        
     try:
-        # 2. Carrega o inventário do jogador e os ingredientes da receita
         inventario = json.loads(jogador.inventario)
         ingredientes = json.loads(receita.ingredientes_json)
-        
-        # 3. Verifica se o jogador tem os materiais
         for item, quantia_necessaria in ingredientes.items():
-            item_norm = item.strip().lower() # Garante a normalização
+            item_norm = item.strip().lower()
             quantia_no_inventario = inventario.get(item_norm, 0)
-            
             if quantia_no_inventario < quantia_necessaria:
                 return jsonify({"erro": f"Materiais insuficientes. Falta: {item_norm} (x{quantia_necessaria - quantia_no_inventario})."}), 400
-        
-        # 4. Se tiver, consome os materiais
         for item, quantia_necessaria in ingredientes.items():
             item_norm = item.strip().lower()
             inventario[item_norm] -= quantia_necessaria
             if inventario[item_norm] == 0:
                 del inventario[item_norm]
-                
-        # 5. Adiciona o item final
         item_final_norm = receita.nome_item_final.strip().lower()
         quantia_atual_final = inventario.get(item_final_norm, 0)
         inventario[item_final_norm] = quantia_atual_final + receita.quantia_produzida
-        
-        # 6. Salva o inventário de volta no DB
         jogador.inventario = json.dumps(inventario)
-        
-        # 7. Adiciona ao Log
         adicionar_informe(f"[OFICINA] {jogador.nome_aventureiro} produziu {receita.quantia_produzida}x '{item_final_norm}'.")
-        
         db.session.commit()
-        
         return jsonify(jogador.to_dict()), 200
-        
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
-
 
 # --- ROTAS DO TERMINAL DO GM ---
 @app.route('/gm')
@@ -484,15 +495,10 @@ def gm_loja_dashboard():
 def gm_mapa_dashboard():
     try: return render_template('gm_mapa.html')
     except Exception as e: return f"Erro: 'gm_mapa.html' não encontrado. {e}", 404
-    
-# --- NOVA ROTA: Hub da Oficina (GM) ---
 @app.route('/gm-oficina')
 def gm_oficina_dashboard():
-    try: 
-        return render_template('gm_oficina.html') # Serve o novo arquivo
-    except Exception as e: 
-        return f"Erro: 'gm_oficina.html' não encontrado. {e}", 404
-
+    try: return render_template('gm_oficina.html')
+    except Exception as e: return f"Erro: 'gm_oficina.html' não encontrado. {e}", 404
 @app.route('/api/jogadores', methods=['GET'])
 def get_jogadores():
     aventureiros = Aventureiro.query.order_by(Aventureiro.nome_aventureiro).all()
@@ -514,12 +520,24 @@ def delete_jogador(nome):
         return jsonify({"erro": str(e)}), 500
 
 # --- GERENCIAMENTO DE TAREFAS (Quests) ---
+@app.route('/api/tarefas/ativas', methods=['GET'])
+def get_tarefas_ativas():
+    # Rota para o GM ver apenas tarefas que ele pode criar/deletar
+    tarefas = Tarefa.query.filter_by(status='ATIVA').all()
+    return jsonify([t.to_dict() for t in tarefas])
+
+@app.route('/api/tarefas/pendentes', methods=['GET'])
+def get_tarefas_pendentes():
+    # Rota para o GM ver tarefas que precisam de aprovação
+    tarefas = Tarefa.query.filter_by(status='PENDENTE').all()
+    return jsonify([t.to_dict() for t in tarefas])
+
 @app.route('/api/tarefas', methods=['POST'])
 def add_tarefa():
     try:
         data = request.json
         if not data or 'texto' not in data: return jsonify({"erro": "Texto da tarefa é obrigatório"}), 400
-        nova_tarefa = Tarefa(texto=data['texto'], xp_reward=data.get('xp_reward', 10), kc_reward=data.get('kc_reward', 5))
+        nova_tarefa = Tarefa(texto=data['texto'], xp_reward=data.get('xp_reward', 10), kc_reward=data.get('kc_reward', 5), status='ATIVA')
         db.session.add(nova_tarefa); db.session.commit()
         adicionar_informe(f"Nova Tarefa (Quest) adicionada: {nova_tarefa.texto}")
         return jsonify(nova_tarefa.to_dict()), 201
@@ -531,6 +549,8 @@ def delete_tarefa_simples(id):
         db.session.delete(tarefa); db.session.commit()
         return jsonify({"message": "Tarefa removida"}), 200
     return jsonify({"erro": "Tarefa não encontrada"}), 404
+
+# (ATUALIZADO: GM agora "Aprova" uma tarefa PENDENTE)
 @app.route('/api/tarefas/<int:id>/complete', methods=['POST'])
 def complete_tarefa(id):
     try:
@@ -540,21 +560,27 @@ def complete_tarefa(id):
         aventureiro = Aventureiro.query.filter_by(nome_aventureiro=nome_aventureiro).first_or_404()
         tarefa = Tarefa.query.get_or_404(id)
         
-        xp_ganho = tarefa.xp_reward; kc_ganho = tarefa.kc_reward
-        aventureiro.xp += xp_ganho; aventureiro.kaicons += kc_ganho
-        texto_tarefa = tarefa.texto
-        db.session.delete(tarefa)
-        
-        adicionar_informe(f"{nome_aventureiro} completou: '{texto_tarefa}' (+{xp_ganho} XP, +{kc_ganho} KÇ).")
-        verificar_level_up(aventureiro)
-        
-        db.session.commit()
-        return jsonify({"message": f"Recompensa dada a {nome_aventureiro}."}), 200
+        # Só dá recompensa se a tarefa estava PENDENTE (ou ATIVA, caso o GM force)
+        if tarefa.status == 'PENDENTE' or tarefa.status == 'ATIVA':
+            xp_ganho = tarefa.xp_reward; kc_ganho = tarefa.kc_reward
+            aventureiro.xp += xp_ganho; aventureiro.kaicons += kc_ganho
+            texto_tarefa = tarefa.texto
+            
+            tarefa.status = 'CONCLUIDA' # Marca como concluída
+            
+            adicionar_informe(f"[GM] aprovou a tarefa '{texto_tarefa}' para {nome_aventureiro} (+{xp_ganho} XP, +{kc_ganho} KÇ).")
+            verificar_level_up(aventureiro)
+            db.session.commit()
+            return jsonify({"message": f"Recompensa dada a {nome_aventureiro}."}), 200
+        else:
+            return jsonify({"erro": "Esta tarefa já foi concluída."}), 400
+            
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
 
 # --- GERENCIAMENTO DE ALERTAS ---
+# (POST, DELETE - Sem alterações)
 @app.route('/api/alertas', methods=['POST'])
 def add_alerta():
     try:
@@ -570,6 +596,7 @@ def clear_alertas():
     return jsonify({"message": "Alertas limpos"}), 200
 
 # --- GERENCIAMENTO DE CRONOGRAMAS (Eventos) ---
+# (POST, DELETE - Sem alterações)
 @app.route('/api/cronogramas', methods=['POST'])
 def add_cronograma():
     try:
@@ -592,6 +619,7 @@ def delete_cronograma(id):
     return jsonify({"erro": "Cronograma não encontrado"}), 404
 
 # --- GERENCIAMENTO DE RODÍZIO (Tarefas Comunitárias) ---
+# (GET, POST, DELETE - Sem alterações)
 @app.route('/api/rodizio', methods=['GET'])
 def get_rodizio():
     hoje = datetime.now().date()
@@ -622,7 +650,7 @@ def delete_rodizio_tarefa(id):
         return jsonify({"message": "Tipo de tarefa de rodízio removida"}), 200
     return jsonify({"erro": "Tipo de tarefa de rodízio não encontrada"}), 404
 
-# (POST /api/informes)
+# (POST /api/informes - Sem alterações)
 @app.route('/api/informes', methods=['POST'])
 def add_informe_manual():
     data = request.json
@@ -631,7 +659,7 @@ def add_informe_manual():
     adicionar_informe(f"[INFORME MANUAL] {texto}")
     return jsonify({"message": "Informe adicionado ao registro."}), 201
 
-# (POST /api/aventureiro/ajustar-stats)
+# (POST /api/aventureiro/ajustar-stats - Sem alterações)
 @app.route('/api/aventureiro/ajustar-stats', methods=['POST'])
 def adjust_stats():
     data = request.json
@@ -668,7 +696,7 @@ def adjust_stats():
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
 
-# (POST /api/aventureiro/ajustar-inventario)
+# (POST /api/aventureiro/ajustar-inventario - Sem alterações)
 @app.route('/api/aventureiro/ajustar-inventario', methods=['POST'])
 def adjust_inventario():
     data = request.json
@@ -700,6 +728,7 @@ def adjust_inventario():
     return jsonify(aventureiro.to_dict()), 200
 
 # --- GERENCIAMENTO DA LOJA (GM) ---
+# (POST /api/loja-item, DELETE /api/loja-item/<id>, POST /api/loja/ajustar, GET /api/informes/loja - Sem alterações)
 @app.route('/api/loja-item', methods=['POST'])
 def add_loja_item():
     try:
@@ -759,6 +788,7 @@ def get_informes_loja():
     return jsonify([informe.to_dict() for informe in informes_db])
 
 # --- MÓDULO DE CONTROLE DO HABITAT ---
+# (GET /api/habitat/sistemas, PUT /api/habitat/sistemas/<id>/status - Sem alterações)
 @app.route('/api/habitat/sistemas', methods=['GET'])
 def get_habitat_sistemas():
     sistemas = HabitatSistema.query.order_by(HabitatSistema.id).all()
@@ -776,7 +806,7 @@ def set_habitat_sistema_status(id):
             tarefa_texto = f"Reparar o {sistema.nome} ({sistema.setor})"
             tarefa_existente = Tarefa.query.filter_by(texto=tarefa_texto).first()
             if not tarefa_existente:
-                nova_tarefa = Tarefa(texto=tarefa_texto, xp_reward=100, kc_reward=50)
+                nova_tarefa = Tarefa(texto=tarefa_texto, xp_reward=100, kc_reward=50, status='ATIVA')
                 db.session.add(nova_tarefa)
                 adicionar_informe(f"Nova Tarefa (Quest) gerada por falha no sistema: {tarefa_texto}")
         else:
@@ -789,6 +819,7 @@ def set_habitat_sistema_status(id):
         return jsonify({"erro": str(e)}), 500
         
 # --- ROTAS DE GERENCIAMENTO DE NPCs E MAPA DE RASTREAMENTO ---
+# (GET /api/npcs, POST /api/npcs, DELETE /api/npcs/<id>, PUT /api/npcs/<id>/localizacao, GET /api/mapa/localizacoes - Sem alterações)
 @app.route('/api/npcs', methods=['GET'])
 def get_npcs():
     npcs = NPC.query.order_by(NPC.nome).all()
@@ -844,13 +875,13 @@ def get_mapa_localizacoes():
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
-# --- NOVAS ROTAS: GERENCIAMENTO DE PRODUÇÃO (GM) ---
+# --- ROTAS DE GERENCIAMENTO DE PRODUÇÃO (GM) ---
+# (GET /api/receitas, POST /api/receitas, DELETE /api/receitas/<id> - Sem alterações)
 @app.route('/api/receitas', methods=['GET'])
-@jwt_required() # Protegido para GM e Jogador
+@jwt_required()
 def get_receitas():
     receitas = Receita.query.order_by(Receita.nome_item_final).all()
     return jsonify([r.to_dict() for r in receitas])
-
 @app.route('/api/receitas', methods=['POST'])
 def add_receita():
     try:
@@ -864,7 +895,7 @@ def add_receita():
         try:
             json.loads(ingredientes_json)
         except json.JSONDecodeError:
-            return jsonify({"erro": "Formato de Ingredientes JSON inválido."}), 400
+            return jsonify({"erro": "Formato de Ingredientes JSON inválido. Use {'item1': 1, 'item2': 2}"}), 400
             
         nova_receita = Receita(
             nome_item_final=nome_item_final.strip().lower(),
@@ -879,7 +910,6 @@ def add_receita():
     except Exception as e:
         db.session.rollback()
         return jsonify({"erro": str(e)}), 500
-
 @app.route('/api/receitas/<int:id>', methods=['DELETE'])
 def delete_receita(id):
     receita = Receita.query.get(id)
@@ -896,8 +926,8 @@ def create_initial_data():
     if Tarefa.query.first() is None:
         print("Criando tarefas iniciais...")
         db.session.add_all([
-            Tarefa(texto="Sincronização de Rede (Setor 2)", xp_reward=50, kc_reward=10),
-            Tarefa(texto="Coletar 'Manuscrito' (Setor 4)", xp_reward=100, kc_reward=25)
+            Tarefa(texto="Sincronização de Rede (Setor 2)", xp_reward=50, kc_reward=10, status='ATIVA'),
+            Tarefa(texto="Coletar 'Manuscrito' (Setor 4)", xp_reward=100, kc_reward=25, status='ATIVA')
         ])
     if Cronograma.query.first() is None:
         print("Criando cronogramas iniciais...")
@@ -948,8 +978,6 @@ def create_initial_data():
             NPC(nome="Engenheiro Chefe (NPC)", descricao="Obsessivo com a manutenção.", localizacao_atual="Setor 6 (Oficinas)"),
             NPC(nome="Cozinheira (NPC)", descricao="Controla o estoque de alimentos.", localizacao_atual="Setor 4 (Refeitório)")
         ])
-    
-    # --- NOVO: Popula as Receitas Iniciais ---
     if Receita.query.first() is None:
         print("Adicionando receitas de produção iniciais...")
         r1 = Receita(
