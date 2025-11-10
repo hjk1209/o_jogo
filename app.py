@@ -20,9 +20,6 @@ app = Flask(__name__)
 # --- CORREÇÃO DE CORS (para Render/Netlify) ---
 origins = [
     "https://guia-kaibora.netlify.app", # O seu site Netlify
-    "http://127.0.0.1:5500",
-    "http://127.0.0.1:5501",
-    "null" # Para testes locais (abrir o ficheiro diretamente)
 ]
 CORS(app, origins=origins, supports_credentials=True)
 
@@ -1001,3 +998,4 @@ if __name__ == '__main__':
     print(f"Banco de dados está em: {os.path.join(base_dir, 'kaibora.db')}")
     print("Acesse o painel do GM em: http://127.0.0.1:5000/gm")
     app.run(debug=True, port=5000)
+
